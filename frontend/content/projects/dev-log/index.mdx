@@ -1,0 +1,47 @@
+---
+date: "2026-09-05"
+status: "in-progress"
+tags: ["nextjs", "mdx", "design"]
+title: "DEV.LOG — 생각이 기록이 되는 곳"
+description: "MDX와 Git으로 만드는 개인 기술 블로그. 배우고 만든 과정을 차곡차곡 연결합니다."
+category: "Personal Project"
+tech: ["Next.js", "TypeScript", "Tailwind CSS", "MDX"]
+thumbnail: "./thumbnail.svg"
+---
+
+## Overview
+
+글을 쓰는 도구는 익숙하게, 읽는 경험은 편안하게. 개인 기술 블로그의 첫 단계는 별도의 관리 화면 없이 MDX와 Git으로 콘텐츠를 관리하는 프론트엔드입니다.
+
+## 기록이 연결되는 과정
+
+<ProjectStory />
+
+## Architecture
+
+```text title="frontend architecture"
+MDX + local images
+        ↓
+Content reader → Server-rendered pages
+        ↓
+SearchService / ChatService
+        ↓
+HTTP adapters → Next.js proxy → Spring Boot
+        ↓
+PostgreSQL metadata index + daily views
+```
+
+본문 렌더링과 상호작용을 분리하고, 검색과 대화 UI는 서비스 인터페이스를 통해 데이터를 받습니다. 검색과 조회수는 HTTP 어댑터를 통해 Spring Boot에 연결하며, 대화 화면은 데모 어댑터를 유지합니다. 응답과 이벤트 타입은 명세에 맞췄습니다.
+
+## 선택과 이유
+
+| 선택 | 이유 |
+| --- | --- |
+| 글 단위 디렉터리 | 원본과 이미지를 함께 관리 |
+| MDX | 코드와 그림이 포함된 기술 기록 |
+| 서버 렌더링 | 읽기 중심의 페이지 구성 |
+| 서비스 인터페이스 | UI와 데이터 공급 방식 분리 |
+
+## 현재 구현 범위
+
+글 목록과 상세, 주제별 탐색, 정글 아카이브, 프로젝트 소개, 실제 검색과 조회수, 대화 목업을 제공합니다. Spring Boot와 PostgreSQL이 공개 글의 메타데이터와 일별 조회수를 관리합니다. 실제 AI 응답과 공개 배포 연결은 후속 단계입니다.
