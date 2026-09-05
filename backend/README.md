@@ -54,12 +54,21 @@ Testcontainers가 격리된 PostgreSQL 컨테이너와 임시 MDX 디렉터리�
 | `DATABASE_URL` | `jdbc:postgresql://localhost:55432/devlog` |
 | `DATABASE_USERNAME` | `devlog` |
 | `DATABASE_PASSWORD` | 필수 |
-| `BLOG_CONTENT_ROOT` | `../frontend/content` |
+| `BLOG_CONTENT_ROOT` | `../frontend/content` (`BLOG_CONTENT_SOURCE=local`일 때만 사용) |
 | `BLOG_ADMIN_TOKEN` | 관리자 전용 토큰. 미설정 시 관리자 API 비활성 |
 | `BLOG_INDEX_ENABLED` | `true` |
 | `BLOG_INDEX_INTERVAL_MS` | `30000` |
 | `PORT` | `8080` |
+| `BLOG_CONTENT_SOURCE` | `local`(기본) 또는 `github` |
+| `BLOG_CONTENT_GITHUB_REPO` | `github`일 때 필수, 예: `yongminkim0501/developer-blog` |
+| `BLOG_CONTENT_GITHUB_BRANCH` | `main` |
+| `BLOG_CONTENT_GITHUB_PATH` | `frontend/content` |
+| `BLOG_CONTENT_GITHUB_TOKEN` | GitHub read-only PAT. 미설정 시 시간당 60회 제한(공개 저장소도 30초 주기 폴링엔 부족) |
 
 스키마는 Flyway migration으로 관리하고 Hibernate는 스키마 일치 여부만 검증합니다.
+
+### 콘텐츠 소스: 로컬 vs GitHub
+
+기본값(`local`)은 지금까지처럼 `BLOG_CONTENT_ROOT`가 가리키는 로컬 디렉터리(또는 docker volume mount)를 읽습니다. 프론트(Vercel)와 백엔드가 서로 다른 서버에 배포되어 파일시스템을 공유할 수 없는 환경(Railway 등)에서는 `BLOG_CONTENT_SOURCE=github`로 설정하면, 백엔드가 매 재인덱싱마다 GitHub API로 `frontend/content`를 직접 조회합니다. 글 작성 방식(`npm run new`, 폴더 구조, frontmatter)은 전혀 바뀌지 않고, 백엔드가 콘텐츠를 읽어오는 경로만 바뀝니다.
 
 API 요청·응답과 인덱싱 규칙은 [docs/API.md](../docs/API.md)를 참고하세요. AI/RAG와 Chat SSE는 후속 단계입니다.

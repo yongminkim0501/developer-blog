@@ -17,7 +17,6 @@ import { useServices } from "./providers";
 import type { SearchItem } from "@/types";
 const links = [
   ["기록", "/blog"],
-  ["정글", "/jungle"],
   ["프로젝트", "/projects"],
   ["소개", "/about"],
 ];
