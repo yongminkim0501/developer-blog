@@ -1,0 +1,29 @@
+---
+date: "2026-08-28"
+status: "published"
+tags: ["algorithm", "tree", "자료구조"]
+title: "트리의 균형을 생각하는 방법"
+description: "노드와 연결부터 회전까지. 자료구조를 직접 그리며 익히는 시간."
+category: "Operating System"
+series: "Algorithm & Data Structure"
+project: "krafton-jungle"
+week: 1
+demo: true
+thumbnail: "./thumbnail.svg"
+---
+
+## 연결부터 그려보기
+
+트리를 배열처럼 나열하는 대신 노드 사이의 관계로 그려봅니다. 부모와 자식, 부분 트리의 범위를 표시하면 변환 전후를 비교하기 쉬워집니다.
+
+## 순서와 높이
+
+탐색 순서를 유지하면서 높이를 조절한다는 목표를 분리해서 이해해봅니다. 작은 입력을 하나씩 추가하며 어느 순간 한쪽으로 치우치는지 관찰합니다.
+
+## 손으로 추적할 예제
+
+```text title="insert-order.txt"
+24 → 12 → 36 → 6 → 18 → 42
+```
+
+실제 구현 코드와 검증한 불변 조건을 이 위치에 추가할 예정입니다.

@@ -1,0 +1,43 @@
+---
+date: "2026-09-05"
+status: "published"
+tags: ["nextjs", "mdx", "블로그"]
+title: "기록이 쌓이는 공간, 나만의 기술 블로그"
+description: "글을 쓰는 일에 집중할 수 있도록. MDX와 Git으로 단순한 기록의 흐름을 설계합니다."
+category: "Dev Log"
+series: "Building in Public"
+project: "dev-log"
+featured: true
+demo: true
+thumbnail: "./thumbnail.svg"
+---
+
+## 어떤 공간을 만들고 싶은가
+
+기술을 공부하다 보면 답을 찾는 것만큼, 그 답에 도달한 과정을 남기는 일이 중요하게 느껴집니다. 이 블로그는 그 과정을 글과 이미지로 함께 보관하는 공간으로 설계했습니다.
+
+## 글 하나, 폴더 하나
+
+글의 원본과 이미지를 가까이 두면 변경 이력을 함께 살펴볼 수 있습니다.
+
+```text title="content structure"
+content/blog/my-first-note/
+├── index.mdx
+├── thumbnail.svg
+└── architecture.png
+```
+
+이미지는 `./architecture.png`처럼 상대 경로로 참조합니다. 빌드 단계에서 공개 경로로 복사하고 본문을 렌더링할 때 경로를 연결합니다.
+
+## 읽는 경험을 먼저
+
+큰 제목과 충분한 여백은 글의 흐름을 정리하는 데 사용합니다. 본문에서는 장식보다 행간, 코드, 이미지 설명을 우선합니다.
+
+<Callout>검색은 Spring Boot에 연결했고, 대화 화면은 현재 데모입니다. 실제 검색과 조회수를 확인한 뒤 AI 기능을 연결할 계획입니다.</Callout>
+
+## 앞으로 남길 기록
+
+- 화면을 설계하며 선택한 기준
+- 콘텐츠 경로와 메타데이터 구조
+- 작성부터 배포까지의 경험
+- 실제 사용하며 발견한 불편함
