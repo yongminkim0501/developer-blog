@@ -40,7 +40,7 @@ export default function ProjectStory() {
           if (entry.isIntersecting)
             setActive(Number((entry.target as HTMLElement).dataset.step));
       },
-      { rootMargin: "-30% 0px -35% 0px", threshold: 0 },
+      { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
     );
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();

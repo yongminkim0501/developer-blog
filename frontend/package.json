@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "sync:assets": "node scripts/sync-assets.mjs"
+    "sync:assets": "node scripts/sync-assets.mjs",
+    "new": "node scripts/new-post.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -28,7 +29,8 @@
     "react-dom": "^19.2.0",
     "rehype-pretty-code": "^0.14.5",
     "rehype-slug": "^6.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "simple-icons": "^16.29.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",

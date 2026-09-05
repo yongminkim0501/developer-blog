@@ -13,21 +13,22 @@ export default function Home() {
           <span className="eyebrow">
             <i className="status-dot" /> A DEVELOPER’S FIELD NOTES
           </span>
-          <span className="intro-edition">VOL. 01 — THE BEGINNING</span>
         </div>
         <h1>
-          배우고, 만들고,
+          안녕하세요
           <br />
-          <span>조금 더 깊이 이해합니다.</span>
+          <span>
+            개발자 <span className="name-highlight">김용민</span>입니다.
+          </span>
         </h1>
         <div className="intro-bottom">
           <p>
-            코드 너머의 이유를 찾아가는 과정.
+            코드 너머의 이유를 찾아가는 과정
             <br />
-            작은 궁금증부터 직접 만든 것들까지, 여기 기록합니다.
+            작은 궁금증부터 직접 만든 것들까지 여기 기록합니다
           </p>
           <div className="intro-topics">
-            BACKEND <span>/</span> SYSTEMS <span>/</span> KRAFTON JUNGLE
+            BACKEND <span>/</span> SYSTEMS
           </div>
         </div>
       </section>
