@@ -24,6 +24,11 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Run python3 scripts/setup-local.py first}
       BLOG_ADMIN_TOKEN: ${BLOG_ADMIN_TOKEN:?Run python3 scripts/setup-local.py first}
       BLOG_CONTENT_ROOT: /content
+      BLOG_CONTENT_SOURCE: ${BLOG_CONTENT_SOURCE:-local}
+      BLOG_CONTENT_GITHUB_REPO: ${BLOG_CONTENT_GITHUB_REPO:-}
+      BLOG_CONTENT_GITHUB_BRANCH: ${BLOG_CONTENT_GITHUB_BRANCH:-main}
+      BLOG_CONTENT_GITHUB_PATH: ${BLOG_CONTENT_GITHUB_PATH:-frontend/content}
+      BLOG_CONTENT_GITHUB_TOKEN: ${BLOG_CONTENT_GITHUB_TOKEN:-}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
