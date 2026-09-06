@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Post } from "@/types";
+import { posts } from "@/lib/content";
 import { PostGrid } from "./post-card";
 export default function Archive({
   label,
@@ -14,6 +15,7 @@ export default function Archive({
   items: Post[];
   active?: string;
 }) {
+  const categories = [...new Set(posts().map((p) => p.category))];
   return (
     <main className="shell archive-page">
       <header className="page-heading">
@@ -24,9 +26,9 @@ export default function Archive({
       <nav className="category-nav" aria-label="주제 필터">
         {[
           ["전체", "/blog"],
-          ["Operating System", "/categories/Operating%20System"],
-          ["Backend", "/categories/Backend"],
-          ["Dev Log", "/categories/Dev%20Log"],
+          ...categories.map(
+            (c) => [c, `/categories/${encodeURIComponent(c)}`] as const,
+          ),
         ].map(([name, url]) => (
           <Link
             key={url}

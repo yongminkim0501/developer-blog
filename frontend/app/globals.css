@@ -1049,7 +1049,7 @@ a:focus-visible {
 .article-hero {
   display: block;
   width: 100%;
-  max-height: 520px;
+  aspect-ratio: 790 / 480;
   object-fit: cover;
   border-radius: 20px;
   margin-bottom: 65px;
