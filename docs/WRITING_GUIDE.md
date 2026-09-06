@@ -13,13 +13,12 @@ jungle에 넣을 때만 frontmatter에 `project: "krafton-jungle"` + `week: N`�
 
 ## 2. category — 큰 주제 버킷
 
-지금 실제로 쓰이는 카테고리 3개:
+지금 실제로 쓰이는 카테고리 (최신 기준, `grep -h '^category:' frontend/content/*/*/index.mdx | sort -u`로 항상 재확인):
 
-- `Backend`
-- `Operating System`
-- `Dev Log` (블로그 자체에 대한 글)
+- `Backend`, `Operating System`, `Dev Log` (블로그 자체에 대한 글)
+- `Capstone`, `Spring 오픈소스`, `AX 인재전쟁`, `Jungle`, `Python`, `Graphics`
 
-**가능하면 이 3개 중 하나를 재사용하세요.** 새 카테고리는 자유롭게 추가 가능하지만(예: `AI/LLM`, `Infra`), 너무 잘게 쪼개면 `/categories` 페이지가 지저분해집니다. 애매하면 `Backend`로 퉁치고 `tags`로 세분화하는 걸 추천합니다.
+**가능하면 기존 카테고리 중 하나를 재사용하세요.** 새 카테고리는 자유롭게 추가 가능하지만(실제로 `Python`, `Graphics` 등이 이렇게 추가됨), 너무 잘게 쪼개면 `/categories` 페이지가 지저분해집니다. 애매하면 가장 가까운 기존 카테고리로 퉁치고 `tags`로 세분화하는 걸 추천합니다.
 
 ## 3. tags — 세부 키워드
 
@@ -89,6 +88,8 @@ week: 9
 ```
 
 같은 폴더에 이미지 파일을 넣고 상대경로로 참조합니다. `alt` 텍스트는 의미 있게 채우세요 (나중에 RAG 인덱싱에도 쓰일 예정).
+
+**주의**: 원본이 raw HTML `<img src="./x.png">` 태그로 돼 있으면 그대로 쓰지 마세요 — 이 태그는 자산 경로 자동 변환(`assetUrl()`)이 적용되지 않아 이미지가 깨집니다. 반드시 위 마크다운 `![]()` 문법으로 바꿔서 넣으세요.
 
 ### 코드 블록
 
