@@ -1,0 +1,240 @@
+---
+title: "Spring AI 2.0.1, 1년 묵은 이슈 재현해보기 (#2765)"
+description: "Spring AI 2.0.1에서 1년 된 스트리밍 NPE 이슈(#2765)를 목 서버로 직접 재현해본 기록. 원본 NPE는 사라졌지만 실패 자체는 남아있었다."
+date: "2026-09-06"
+category: "Spring 오픈소스"
+tags: ["spring-ai", "spring", "npe", "오픈소스"]
+series: "Spring AI 이슈 재현"
+status: "published"
+thumbnail: "./thumbnail.svg"
+---
+
+> 2026년 8월 23일 기준으로 작성했다. Spring AI는 릴리즈가 빠른 프로젝트라 이후 내용이 달라질 수 있다.
+
+## 결론부터
+
+- 원본에 보고된 `ConcurrentHashMap` NPE는 **2.0.1에서 재현되지 않았다.**
+- 다만 `id`가 누락된 스트리밍 응답에서 **실패하는 현상 자체는 남아 있다.** SDK 레벨 예외(`OpenAIInvalidDataException`)로 형태가 바뀌었을 뿐이다.
+- 재현 과정에서 예상이 한 번 틀렸고, 그게 이 글에서 제일 재밌는 부분이다.
+
+---
+
+[spring-projects/spring-ai#2765 — NPE in id field of streaming responses for some models (e.g., deepseekR1)](https://github.com/spring-projects/spring-ai/issues/2765)
+
+내용은 단순하다. 스트리밍 응답 청크에 `id`가 없으면 NPE가 난다는 것.
+
+---
+
+## 먼저 전제부터 의심했다
+
+바로 코드를 짜기 전에 확인하고 싶은 게 있었다. **"DeepSeek이 `id`를 안 보낸다"는 게 사실인가?**
+
+공식 문서 세 군데를 봤다.
+
+**OpenAI API 레퍼런스** — `id`는 청크 스키마의 **필수 필드**다. "채팅 완성에 대한 고유 식별자이며 모든 청크가 동일한 ID를 갖는다"고 명시돼 있다. 선택 필드가 아니다. 즉 `id`를 빼는 서버는 스펙 위반이다.
+
+**DeepSeek API 문서** — 스트리밍 예시 응답에 `id`가 포함돼 있고, 생략한다는 언급은 어디에도 없다. DeepSeek은 예외적인 동작(예: usage 필드가 마지막 청크에만 실제 값이 온다는 것)은 문서에 명시하는 편인데, `id`에 대해선 그런 언급이 없다.
+
+**vLLM 문서** — R1을 셀프호스팅하는 흔한 경로라 확인해봤다. 여기 예시에도 `id`가 정상적으로 들어있다.
+
+그리고 하나 더 발견했다. **2026년 7월 24일부로 `deepseek-chat`과 `deepseek-reasoner`는 공식 API에서 폴백 없이 에러를 반환한다.** 지금은 V4 계열로 넘어갔다. 즉 이슈에 적힌 `deepseekR1`은 공식 API로는 재현 자체가 불가능하다.
+
+### 그래서 확인 대상을 다시 정했다
+
+리포터가 명시하지 않은 게 있었다. 그 `deepseekR1`이 공식 API였는지, 셀프호스팅이었는지, 중간에 프록시를 낀 거였는지. 문서상으로는 셋 다 `id`를 보내야 하는데 실제로는 안 왔다는 것이니, 출처가 불명확하다.
+
+**확인하지 않아도 되는 것**
+
+- `deepseekR1`이 실제로 `id`를 반환하는가 → 서비스 종료로 확인 불가
+- 누락이 어느 서빙 프레임워크/게이트웨이에서 발생했는가 → 특정해도 이슈 해결과 무관
+
+**확인해야 하는 것**
+
+- `id`가 없는 응답을 받았을 때 Spring AI 2.0.1이 어떻게 동작하는가
+- 실패한다면, 사용자가 원인을 알 수 있는 형태인가
+
+출처 추적을 포기하고 방어 동작 검증으로 초점을 옮긴 것. 이게 이 재현의 전제다.
+
+---
+
+## 재현 환경 설계
+
+### 왜 목 서버인가
+
+실제 서비스로는 재현할 수 없다. `id`를 확실히 비우려면 응답을 내가 통제해야 한다. FastAPI로 OpenAI 호환 SSE 서버를 흉내 냈다.
+
+```
+[Spring Boot 앱]  ──HTTP──>  [FastAPI 목 서버]
+ Spring AI 클라이언트           가짜 OpenAI 서버
+ base-url을 여기로 지정          id 포함/생략 토글
+```
+
+Spring AI 입장에선 그냥 OpenAI 호환 서버로 보인다. `base-url`만 로컬로 돌리면 된다.
+
+### 왜 대조군이 필요한가
+
+실험군만 돌려서 예외가 나면 "`id` 때문"이라고 단정할 수 없다. 목 서버 자체가 이상했을 수도 있으니까. `id`가 있는 버전과 없는 버전을 **나란히 놓아야** 변수가 하나로 좁혀진다.
+
+환경변수 하나로 토글하게 만들었다.
+
+```python
+INCLUDE_ID = os.getenv("INCLUDE_ID", "1") == "1"
+
+def build_chunk(delta: dict, finish_reason=None) -> dict:
+    chunk = {
+        "object": "chat.completion.chunk",
+        "created": 1700000000,
+        "model": "deepseek-reasoner",
+        "choices": [{"index": 0, "delta": delta, "finish_reason": finish_reason}],
+    }
+    if INCLUDE_ID:
+        chunk["id"] = "chatcmpl-mock-0001"
+    return chunk
+```
+
+## 삽질 기록
+
+### 1. 캐치올 라우트가 모든 요청을 삼켰다
+
+경로를 고쳤는데도 청크가 0개였다. uvicorn 로그를 보니 `>>>`가 여전히 찍혀 있었다. 디버깅용으로 넣은 캐치올을 원래 핸들러보다 **위에** 뒀던 게 원인. FastAPI는 먼저 등록된 라우트가 이긴다. 맨 아래로 옮겼다.
+
+### 2. 형식이 어긋난 응답을 조용히 삼켰다
+
+위 두 삽질 사이에 흥미로운 관찰이 있었다. 캐치올이 200으로 `{"detail":"Not Found"}`(SSE가 아닌 일반 JSON)를 반환했을 때, **Spring AI는 예외 없이 빈 스트림으로 정상 종료했다.**
+
+```
+=== STREAM START ===
+=== COMPLETE ===
+=== TOTAL CHUNKS: 0 ===
+```
+
+404일 땐 예외를 냈는데, 200에 형식만 다른 응답은 그냥 삼켰다. 의도된 동작인지는 모르겠지만 기록해둘 만하다고 생각했다.
+
+---
+
+## 결과
+
+토큰 8개(청크 10개) 조건에서 `id`만 토글했다.
+
+### 대조군 (`id` 포함)
+
+```
+=== STREAM START ===
+CHUNK[1] text=
+CHUNK[2] text=1
+CHUNK[3] text=2
+...
+CHUNK[9] text=8
+CHUNK[10] text=
+=== COMPLETE ===
+=== TOTAL CHUNKS: 10 ===
+```
+
+목 서버가 보낸 그대로 왔다. role만 담긴 첫 청크, 본문 8개, finish_reason만 있는 종료 청크.
+
+### 실험군 (`id` 생략)
+
+```
+com.openai.errors.OpenAIInvalidDataException: `id` is not set
+    at com.openai.core.JsonField.getRequired$openai_java_core(Values.kt:174) ~[openai-java-core-4.39.1.jar:4.39.1]
+    at com.openai.models.chat.completions.ChatCompletionChunk.id(ChatCompletionChunk.kt:91) ~[openai-java-core-4.39.1.jar:4.39.1]
+    at org.springframework.ai.openai.OpenAiChatModel$ChunkMerger.chunkToChatCompletion(OpenAiChatModel.java:1141) ~[spring-ai-openai-2.0.0.jar:2.0.0]
+    ... (Reactor 프레임 생략)
+```
+
+| | `id` 있음 | `id` 없음 |
+|---|---|---|
+| 수신 청크 | 10 | 0 |
+| 텍스트 | 1~8 정상 | 없음 |
+| 스트림 완료 | 도달 | 미도달 |
+| 예외 | 없음 | `OpenAIInvalidDataException` |
+
+### 원본과 무엇이 다른가
+
+원본(1.0.0-M7)은 `ConcurrentHashMap.get`에서 나는 NPE였다. 메시지가 `Cannot invoke "Object.hashCode()" because "key" is null`이었다.
+
+2.0.1에서는 `OpenAIInvalidDataException: id is not set`이다.
+
+스택트레이스를 소속별로 나눠보면 이렇다.
+
+```
+com.openai.errors.OpenAIInvalidDataException      ← SDK가 정의한 예외
+  at com.openai.core.JsonField.getRequired(...)   ← SDK가 던짐
+  at ChatCompletionChunk.id(...)                  ← SDK 접근자
+  at OpenAiChatModel$ChunkMerger...(...)          ← Spring AI가 호출
+```
+
+jar 이름이 `openai-java-core-4.39.1.jar`이고 확장자가 `.kt`다. Spring AI가 아니라 OpenAI 공식 Java SDK다. **누락을 감지한 건 SDK고, Spring AI는 그걸 호출한 쪽**이다.
+
+원인은 같고 증상이 바뀐 것. "맵 키가 null이다"에서 "id가 설정되지 않았다"로. 진짜 원인(서버 응답에 필수 필드가 없음)에 훨씬 가까운 메시지가 됐다.
+
+---
+
+## 예상이 틀린 지점
+
+로그를 처음 봤을 때 같은 예외가 **4번** 찍혀 있었다. 청크가 5개였으니 "청크마다 반복되는구나"라고 생각했다. 리포트에도 그렇게 쓰려고 했다.
+
+그런데 확인하는 게 낫겠다 싶어서 토큰을 3개에서 8개로 늘려봤다. 청크가 10개가 되면 에러도 9번쯤 나와야 할 텐데.
+
+**5번 나왔다.**
+
+| 청크 수 | 에러 로그 횟수 |
+|---|---|
+| 5 | 4 |
+| 10 | 5 |
+
+비례하지 않는다. 그리고 스레드 이름을 보니 첫 로그와 나머지가 달랐다.
+
+```
+[andler-thread-0]  ← 첫 번째
+[oundedElastic-1]  ← 나머지
+```
+
+`MessageAggregator`가 여러 구독 지점에서 각각 잡아 로깅하는 것으로 **보이는데**, 확실하지 않다. 확인하려면 `MessageAggregator`와 `ChatClient` 쪽 코드를 읽어야 한다.
+
+만약 확인 안 하고 "청크마다 반복된다"고 썼으면 틀린 리포트가 됐을 것이다. 5분짜리 확인으로 막았다.
+
+---
+
+## 관찰과 판단을 섞지 않기
+
+리포트를 쓰면서 계속 신경 쓴 게 이거다.
+
+처음엔 이렇게 쓰려고 했다.
+
+> ~~SDK 예외가 래핑 없이 전파되는 것은 프레임워크가 충분히 성숙하지 않다는 뜻이다~~
+
+이건 판단이지 관찰이 아니다. 그리고 팀이 다르게 볼 근거가 실제로 있다. SDK 예외를 그대로 흘리는 게 의도된 설계일 수 있다. 래핑하면 원본 정보가 가려지고 사용자가 SDK 문서를 못 찾게 되니까. "얇은 래퍼"를 지향하는 프레임워크는 일부러 이렇게 한다.
+
+그래서 사실만 적었다.
+
+> `OpenAIInvalidDataException`이 래핑 없이 전파된다. 메시지는 `id is not set`으로 명확하지만, 어느 base-url의 서버가 스펙을 위반했는지에 대한 맥락은 포함되지 않는다.
+
+---
+
+## 남은 질문
+
+- `MessageAggregator`는 왜 청크 수와 무관하게 여러 번 로깅하는가
+- OpenAI의 Java SDK에서 오는 에러를 따로 래핑하지 않고 그대로 반환하는 것은 의도된 동작일까?
+- `id`가 첫 청크에만 있고 나머지엔 없는 경우는 어떻게 되는가 (실제 게이트웨이에서 흔한 패턴)
+- 형식이 어긋난 200 응답을 조용히 삼키는 동작은 의도된 것인가
+
+---
+
+## 정리
+
+이번에 한 일은 고친 게 아니라 **상태를 확정한 것**이다.
+
+메인테이너 입장에선 "재현 불가라 판단 보류"였던 게 "확인됨, 결정 가능"으로 바뀐다. 그게 이 작업의 전부고, 반응이 오든 안 오든 이슈에는 최신 정보가 붙었다.
+
+재현 코드: [gist](https://gist.github.com/yongminkim0501/0781138eb06327a1952e762c21aee943)
+
+## 결론
+
+이렇게 코멘트를 남겼다.
+
+![GitHub 이슈에 남긴 코멘트](https://velog.velcdn.com/images/yongmin05/post/722322f4-ba8e-4339-a6ec-d935244c7cf2/image.png)
+
+## 추후
+
+다른 부분보다 일단 왜 청크된 개수만큼 에러를 뱉지 않는 것인지에 대해서 코드를 찾아볼 거 같다.
