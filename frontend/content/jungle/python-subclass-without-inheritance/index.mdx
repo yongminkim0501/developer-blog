@@ -1,0 +1,237 @@
+---
+title: "2주차 - 파이썬은 상속 없이도 서브클래스 관계가 된다"
+description: "super()는 부모가 아니라 MRO상 다음 클래스를 가리킨다는 것부터, ABCMeta의 __subclasshook__과 register()로 상속 없이 서브클래스 판정이 이뤄지는 원리까지."
+category: "Python"
+date: "2026-09-06"
+tags: ["python", "mro", "덕타이핑", "protocol"]
+series: "파이썬 내부 파헤치기"
+project: "krafton-jungle"
+week: 2
+status: "published"
+thumbnail: "./thumbnail.png"
+---
+
+> **서브 클래스**는 **부모 클래스**를 상속 받아 성질을 이어 받은 **자식 클래스**이다.
+
+## 파이썬은 상속 없이도 서브 클래스 관계가 된다
+
+`issubclass(list, Container)`는 `True`다. 그런데 `list.__mro__`를 찍어보면 `(list, object)`뿐이다. Container는 어디에도 없다. 상속하지 않았는데 왜 서브클래스로 판정될까?
+
+이 질문을 따라가면 파이썬의 타입 시스템이 생각보다 훨씬 유연하게 설계돼 있다는 걸 알게 된다. 출발점은 다중 상속과 MRO다.
+
+---
+
+### MRO: `super()`는 "부모"가 아니다
+
+```python
+class A:
+    def greet(self): print('A')
+
+class B(A):
+    def greet(self):
+        print('B')
+        super().greet()
+
+class C(A):
+    def greet(self):
+        print('C')
+        super().greet()
+
+class D(B, C):
+    def greet(self):
+        print('D')
+        super().greet()
+
+D().greet()
+```
+
+직관적으로 추적하면 이렇게 예상하기 쉽다.
+
+```
+D → B → A → C → A
+```
+
+B의 `super()`가 B의 부모인 A를 부를 테니까. 하지만 실제 출력은 다르다.
+
+```
+D
+B
+C
+A
+```
+
+```python
+>>> D.__mro__
+(<class 'D'>, <class 'B'>, <class 'C'>, <class 'A'>, <class 'object'>)
+```
+
+핵심은 이것이다. **`super()`는 "부모 클래스"가 아닌 "인스턴스의 MRO를 기준으로 바로 다음 클래스"를 가리킨다.**
+
+`D()` 인스턴스의 MRO에서 B 다음은 A가 아니라 C다. 그래서 B의 `super().greet()`가 C를 호출한다. 그리고 A는 MRO에 단 한 번만 등장하므로 딱 한 번만 실행된다. 이걸 **협력적 다중 상속(cooperative multiple inheritance)** 이라고 부른다. 각 클래스가 자기 부모를 직접 아는 게 아니라, 런타임에 결정된 체인에서 자기 다음 사람에게 바통을 넘기는 구조다.
+
+### MRO는 어떻게 계산되나 — C3 선형화
+
+파이썬은 C3 선형화 알고리즘으로 MRO를 만든다.
+
+```
+L[D] = D + merge(L[B], L[C], [B, C])
+     = D + merge([B, A, object], [C, A, object], [B, C])
+```
+
+merge는 왼쪽부터 각 리스트의 head를 후보로 삼되, **그 후보가 다른 리스트의 tail(head가 아닌 자리)에 나타나면 건너뛴다.**
+
+1. 후보 `B` — 어느 tail에도 없음 → 채택
+2. 후보 `A` — 두 번째 리스트 `[C, A, object]`의 tail에 있음 → **보류**
+3. 후보 `C` — 어느 tail에도 없음 → 채택
+4. 이제 A를 막던 게 사라짐 → `A`, `object`
+
+결과: `D → B → C → A → object`
+
+- **자식은 항상 부모보다 앞선다.** (A는 B, C보다 뒤)
+- **상속 목록에 쓴 순서가 보존된다.** (`class D(B, C)`이므로 B가 C보다 앞)
+
+이 두 조건을 동시에 만족할 수 없으면 파이썬은 클래스 정의 시점에 `TypeError: Cannot create a consistent method resolution order`를 낸다. Java가 클래스는 단일 상속만 허용하고 다중 구현은 인터페이스로 미룬 것과 달리, 파이썬은 다중 상속을 허용하는 대신 **알고리즘으로 이를 보완하는 것**을 선택했다.
+
+---
+
+### 덕 타이핑
+
+> 오리처럼 걷고 오리처럼 꽥꽥거리면, 그것은 오리다.
+
+파이썬은 객체의 타입이 아니라 **어떤 메서드를 가지고 있는지**로 사용 가능 여부가 결정된다.
+
+문제는 그 다음이다. 덕 타이핑은 보통 "호출해보고 되면 되는 것"이라는 런타임 동작의 문제인데, `issubclass` 같은 **판정 함수까지** 그렇게 동작하는가? 앞서 본 `issubclass(list, Container) == True`가 바로 그 사례처럼 보인다.
+
+### 메서드가 같으면 서브클래스다?
+
+```python
+class Duck:
+    def quack(self): ...
+
+class Robot:
+    def quack(self): ...
+
+issubclass(Robot, Duck)   # False
+```
+
+똑같은 메서드를 가졌지만 `False`다. 그러니 `issubclass(list, Container)`가 True인 건 파이썬의 일반 성질이 아닌 무언가 다른 로직이 있다는 것을 생각해 볼 수 있다.
+
+---
+
+### 판정 권한은 오른쪽 클래스의 메타클래스에 있다
+
+`issubclass(A, B)`는 사실 이렇게 동작한다.
+
+```python
+issubclass(A, B)  →  type(B).__subclasscheck__(B, A)
+```
+
+여기서 **판정 권한이 B(오른쪽)의 메타클래스에 있다**는 것이다. A가 뭘 상속했는지를 A에게 묻는 게 아니라, B의 메타클래스에게 서로가 서브 클래스 관계인지를 묻는다.
+
+`Container`의 메타클래스는 `ABCMeta`다. 그리고 `ABCMeta.__subclasscheck__`는 기본 `type.__subclasscheck__`(MRO)를 오버라이드해서, **먼저 `__subclasshook__`에게 물어본다.**
+
+CPython의 실제 소스(`_collections_abc.py`)를 보자.
+
+```python
+class Container(metaclass=ABCMeta):
+    __slots__ = ()
+
+    @abstractmethod
+    def __contains__(self, x):
+        return False
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is Container:
+            return _check_methods(C, "__contains__")
+        return NotImplemented
+```
+
+```python
+def _check_methods(C, *methods):
+    mro = C.__mro__
+    for method in methods:
+        for B in mro:
+            if method in B.__dict__:
+                if B.__dict__[method] is None:
+                    return NotImplemented
+                break
+        else:
+            return NotImplemented
+    return True
+```
+
+`list`는 `__contains__`를 가지고 있으므로 `True`. 상속 관계는 한 번도 보지 않았다.
+
+### "MRO를 안 뒤진다"?
+
+`_check_methods`도 결국 `C.__mro__`를 순회한다. 다만 **"B가 C의 MRO에 있는가"를 보는 게 아니라, "C의 MRO 어딘가에 이 메서드가 정의돼 있는가"를 본다.**
+
+> `issubclass`는 판정을 오른쪽 클래스의 메타클래스에 위임한다. `ABCMeta`는 그 판정을 상속 그래프 대신 **메서드 존재 여부**로 내린다.
+
+---
+
+### 모든 ABC에 적용된다?
+
+`Container.__subclasshook__`의 `if cls is Container:` 조건을 다시 보자. 이 조건 때문에 **구조 검사는 Container를 상속한 다른 ABC로 전파되지 않는다.**
+
+`__subclasshook__`도 결국 클래스에 붙은 메서드라 자식 `ABC`가 그대로 물려받는다. 가드가 없으면 `Container`의 후손인 `Sequence`까지 "`__contains__`만 있으면 통과"라는 규칙을 상속해버린다. 그래서 각 ABC는 "내가 나 자신일 때만 판단한다"고 못박고, 아니면 `NotImplemented`로 빠진다.
+
+그럼 `issubclass(list, Sequence)`는 왜 True인가? 완전히 다른 메커니즘 때문이다. `_collections_abc.py` 맨 아래를 보면 이런 줄들이 있다.
+
+```python
+Sequence.register(tuple)
+Sequence.register(str)
+Sequence.register(range)
+Sequence.register(memoryview)
+...
+MutableSequence.register(list)
+MutableSequence.register(bytearray)
+```
+
+`register()`는 **"얘를 서브클래스로 쳐달라"고 사람이 직접 등록**하는 것이다. 구조 검사가 아니다.
+
+`Sequence`는 왜 자기 훅을 따로 만들지 않았을까. `dict`를 보면 답이 나온다. `__len__`, `__iter__`, `__contains__`, `__getitem__`을 다 갖췄지만 `d[0]`은 0번째 항목이 아니라 키 0의 값이다. 이름은 같고 의미만 다르니, 메서드 이름 검사로는 시퀀스와 매핑을 절대 구별할 수 없다.
+
+그래서 정리하면 `ABC`의 서브클래스 판정에는 **세 갈래**가 있다.
+
+| 방식 | 예 | 판정 근거 |
+|---|---|---|
+| 실제 상속 | `class MyList(Sequence)` | MRO |
+| `__subclasshook__` | `Container`, `Iterable`, `Hashable`, `Sized`, `Callable` | 메서드 존재 여부 |
+| `register()` | `list` ↔ `MutableSequence` | 명시적 등록 |
+
+**구조적 판정은 파이썬의 기본 규칙이 아니라, 각 ABC가 opt-in으로 열어준 기능이다.** 단일 메서드로 정의되는 단순한 프로토콜에만 열려 있다.
+
+---
+
+## `Protocol`
+
+같은 아이디어를 내 타입에 적용하고 싶다면, ABC의 `__subclasshook__`를 직접 구현하는 대신 `typing.Protocol`을 쓰는 게 현대적인 방법이다.
+
+```python
+from typing import Protocol, runtime_checkable
+
+@runtime_checkable
+class Quacker(Protocol):
+    def quack(self) -> None: ...
+
+class Robot:
+    def quack(self) -> None: print('삐빅')
+
+isinstance(Robot(), Quacker)   # True
+issubclass(Robot, Quacker)     # True
+```
+
+`Robot`은 `Quacker`를 상속하지 않았고 `Quacker`의 존재조차 모르지만 `True`다.
+
+---
+
+## 정리
+
+1. `super()`는 부모가 아니라 **MRO상 다음 클래스**를 가리킨다. 그래서 다이아몬드 상속에서 최상위는 한 번만 실행된다.
+2. `issubclass(A, B)`의 판정 권한은 **B의 메타클래스**에 있다. `ABCMeta`는 이 권한으로 상속 대신 메서드 존재를 본다.
+3. 구조적 판정은 파이썬의 일반 규칙이 아니다. **일부 ABC가 `__subclasshook__`로 열어준 opt-in 기능**이며, `Sequence` 같은 복잡한 ABC는 `register()`라는 다른 길을 쓴다.
+4. 내 코드에서 구조적 타이핑을 쓰고 싶다면 `Protocol` + `runtime_checkable`.
+
+> 파이썬에서 **일부 ABC와 `Protocol`은** 실제 상속 대신 메서드 존재 여부로 서브클래스를 판정할 수 있다. 임의의 두 클래스 사이에 자동으로 성립하는 관계가 아니다.
