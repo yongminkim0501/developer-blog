@@ -18,7 +18,7 @@ export default function Home() {
           안녕하세요
           <br />
           <span>
-            개발자 <span className="name-highlight">김용민</span>입니다.
+            개발자 <Link href="/about" className="name-highlight">김용민</Link>입니다.
           </span>
         </h1>
         <div className="intro-bottom">
