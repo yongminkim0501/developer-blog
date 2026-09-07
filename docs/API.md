@@ -20,7 +20,7 @@ MDX (read-only mount)
 
 `BACKEND_URL`은 Next.js 서버 전용 환경 변수입니다. 기본값은 `http://127.0.0.1:8080`입니다. 프론트의 공개 프록시는 검색과 조회수만 전달하며, 관리자 인증 헤더나 임의 경로는 전달하지 않습니다. 브라우저에서 Spring에 직접 접근하지 않으므로 CORS 허용이 필요하지 않습니다.
 
-Brain은 별도 `ChatService` 뒤의 기존 데모 어댑터를 사용합니다. `/api/v1/chat`은 아직 구현하지 않았습니다. 실제 AI 연결과 SSE는 Phase 3입니다.
+2026-09-07 독립 Brain 페이지와 `ChatService` 데모 구현을 제거했습니다. 기존 `SearchService`와 `ViewService`는 유지합니다. 챗봇은 추후 검색 기능과 통합할 계획이며, `/api/v1/chat`·실제 AI 연결·SSE는 구현하지 않았습니다.
 
 ## 응답
 

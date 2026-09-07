@@ -43,11 +43,12 @@ frontend/public/content/{collection}/{slug}/...
 | 섹션 | 데이터 출처 | 이미지 |
 | --- | --- | --- |
 | 인트로 (타이틀/설명) | 하드코딩된 텍스트 | 없음 |
-| Featured (대표 2개) | `posts().filter(p => p.featured)`, 최대 2개 | 각 글의 `thumbnail` → `PostCard`가 `<img className="post-cover">`로 렌더. 썸네일이 없으면 카테고리명이 들어간 색상 블록(`fallback-cover`)으로 대체 |
-| Recent Notes (3개) | featured를 제외한 나머지 `posts()` 3개 | 위와 동일 (`PostCard`) |
-| Jungle 배너 | 텍스트 + CSS로 그린 원형 장식(`jungle-art`) | 실제 이미지 파일 없음, 전부 CSS/SVG 장식 |
-| 프로젝트 섹션 | `<ProjectStory />` (스크롤 연출) | `components/project-story.tsx`는 이미지 없이 아이콘(`lucide-react`)과 텍스트만 사용 |
-| Brain 배너 | 텍스트 | 없음 |
+| Jungle 배너 | 텍스트 + CSS로 그린 원형 장식(`jungle-art`) | 실제 이미지 파일 없음, 전부 CSS 장식 |
+| Recent Notes (3개) | `posts().slice(0, 3)`, featured 여부와 관계없이 최신순 | 각 글의 `thumbnail` → `PostCard`의 `post-cover`. 썸네일이 없으면 `fallback-cover`로 대체 |
+| 지나온 시간·수상 | `components/profile-sections.tsx`의 `ExperienceList`와 `AwardsList` | 없음. 데스크톱 두 열, 모바일 한 열 |
+| 프로젝트 4개 | 같은 파일의 `ProfileProjects`, 소개 페이지와 공유 | 없음. 설명·태그·GitHub 링크 표시 |
+
+2026-09-07 기준 위 표 순서로 표시합니다. 대표 글 섹션, 홈의 `<ProjectStory />`, Brain 배너는 제거했습니다. 홈 프로젝트는 `/projects`의 MDX 목록과 별도로 관리합니다.
 
 ### `/blog` — 전체 기록 (`app/blog/page.tsx` → `components/archive.tsx`)
 
@@ -93,9 +94,11 @@ frontend/public/content/{collection}/{slug}/...
 
 - 이미지 없음. `about-visual` 블록은 전부 CSS/텍스트로 만든 장식(사진 없는 "STAY CURIOUS." 카드).
 
-### `/brain` — Ask my brain (`app/brain/page.tsx` → `components/brain.tsx`)
+- 경력·수상·프로젝트 목록은 `components/profile-sections.tsx`를 통해 홈과 공유합니다. 소개 페이지의 경력·수상은 기존의 개별 섹션 구성을 유지합니다.
 
-- 이미지 없음, 데모용 스트리밍 채팅 UI. `components/brain.tsx`가 `lib/api`의 `ChatService`(현재는 데모 어댑터)를 사용합니다. 실제 RAG 연결은 Phase 3 예정(`docs/PROJECT_SPEC.md` §22, §20).
+### 제거한 라우트: `/brain`
+
+- 2026-09-07 독립 챗봇 페이지와 데모 컴포넌트를 삭제했습니다. `/brain`은 404이며 모바일 메뉴·푸터에도 진입 링크가 없습니다. 챗봇은 추후 기존 검색과 통합할 계획입니다.
 
 ### 헤더 / 검색 다이얼로그 (`components/header.tsx`)
 

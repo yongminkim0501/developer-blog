@@ -38,13 +38,13 @@ jungle에 넣을 때만 frontmatter에 `project: "krafton-jungle"` + `week: N`�
 - 사이드 프로젝트 관련 글이고 `content/projects/{slug}/`가 이미 있다면 → `project: "{그 slug}"` (예: `"show-gy"`, `"gateway-loadtest"`) — 해당 프로젝트 상세 페이지의 "관련 글" 목록에 자동으로 뜸
 - 관련 프로젝트가 없으면 그냥 생략
 
-## 6. featured — 홈 대표글, 최대 2개
+## 6. featured — 현재 홈에서 사용하지 않음
 
-지금 있는 2개(`building-dev-log`, `pintos-priority-donation`)는 샘플이라, **실제 글 중 가장 보여주고 싶은 2개로 나중에 교체**하세요. `featured: true`를 새 글에 달면서 기존 글에서 하나 빼는 식으로 관리합니다.
+2026-09-07 대표 글 섹션을 제거했습니다. 홈의 ‘차곡차곡 쌓이는 기록’은 `featured` 여부와 관계없이 최신 글 3개를 표시합니다. 새 글에 이 필드를 추가할 필요는 없습니다.
 
 ## 7. `demo: true` — 실제 글에는 절대 넣지 마세요
 
-지금 있는 5개 글은 전부 `demo: true`가 붙어서 "샘플 기록" 표시가 뜹니다. **실제로 쓰시는 10개+ 글에는 이 필드 자체를 넣지 마세요.**
+초기 샘플 글 5개는 제거했고, 2026-09-07 기준 실제 공개 글 16개가 있습니다. 실제 글에는 `demo` 필드를 넣지 마세요. 샘플 표시 기능 자체는 카드 컴포넌트에 남아 있습니다.
 
 ## 8. status — draft로 시작, published로 마무리
 
@@ -148,6 +148,6 @@ week: 9
 2. `status: "draft"`로 로컬에서 작성 (`npm run dev`로 확인)
 3. 다 쓰면 `status: "published"`로 변경, `demo` 필드 없는지 확인
 4. `git add / commit / push origin main`
-5. Vercel 자동 재배포 + 백엔드 검색 인덱스 30초 내 갱신 — 이후 할 일 없음
+5. 연결된 Vercel 배포 결과와 백엔드 검색 반영을 확인합니다. 자동 반영에는 Vercel Git 연동과 Spring 콘텐츠 소스 설정이 필요합니다. GitHub 소스는 재인덱싱 때 저장소를 조회하고, 로컬 소스는 서버에 최신 콘텐츠를 먼저 전달해야 합니다. 기본 재인덱싱 주기는 30초이며 실제 반영 시점은 운영 설정에 따릅니다. [배포 연결 조건](./PUBLISHING.md#현재-완료된-것과-배포-연결)을 참고하세요.
 
 관련 문서: [`docs/PUBLISHING.md`](./PUBLISHING.md), [`docs/PAGES.md`](./PAGES.md), [`docs/PROJECT_SPEC.md`](./PROJECT_SPEC.md)

@@ -32,11 +32,11 @@ http://localhost:3000 에서 확인합니다. Spring API는 localhost:8080, Post
 - SearchService / ViewService의 HTTP Adapter
 - 챗봇은 현재 제공하지 않으며, 추후 검색 기능과 통합 예정
 
-초기 학습 글 5개는 **샘플 콘텐츠**입니다. 작성자의 실제 경험으로 가장하지 않으며, `demo: true` 표시를 사용합니다. 프로젝트 소개는 현재 설계와 구현 범위를 설명합니다. 실제 글 최소 3개 작성, GitHub/Vercel 연결 및 실제 배포는 아직 완료되지 않았습니다.
+2026-09-07 기준 실제 공개 글 16개(blog 5개, jungle 11개)와 프로젝트 MDX 1개가 있으며, 초기 샘플 글은 제거했습니다. 홈은 소개 → 정글 배너 → 최신 기록 3개 → 지나온 시간·수상 → 프로젝트 4개 순서입니다. 화면 개편과 챗봇 제거를 GitHub `main`의 `8b913c5`에 반영했습니다. 검증 결과와 남은 작업은 [현재 진행 상태](docs/PROJECT_SPEC.md#현재-진행-상태)에 기록합니다.
 
 ## 글 쓰기
 
-**글은 admin이 아니라 Git으로 게시합니다.** 전체 흐름과 아직 연결되지 않은 자동 배포 단계는 [docs/PUBLISHING.md](docs/PUBLISHING.md)에 정리했습니다.
+**글은 admin이 아니라 Git으로 게시합니다.** 전체 흐름과 배포 연결 조건은 [docs/PUBLISHING.md](docs/PUBLISHING.md)에 정리했습니다.
 
 ```text
 frontend/content/blog/my-note/
@@ -66,7 +66,7 @@ thumbnail: "./thumbnail.svg"
 ```
 
 - 실제 글로 교체할 때 `demo`를 제거합니다. 공개 전에는 `status: "draft"`를 사용합니다.
-- `featured: true`는 홈 대표 글에 사용합니다. 홈은 최신 대표 글을 최대 2개 보여줍니다.
+- 홈은 `featured` 여부와 관계없이 최신 글 3개를 보여줍니다. `featured` 필드는 현재 홈 노출에 사용하지 않습니다.
 - `series`로 시리즈를 묶습니다. 정글 기록은 `project: "krafton-jungle"`, `week: 4`처럼 분류합니다.
 - 정글 글은 `content/jungle/`에서도 작성하며, 상세 URL은 `/blog/{slug}`입니다. blog와 jungle 사이에 slug가 겹치지 않게 작성합니다.
 - 프로젝트는 `content/projects/{slug}/index.mdx`에 작성합니다. `status`는 `in-progress` 또는 `completed`, `tech`와 선택적인 `github`를 사용합니다.
@@ -95,7 +95,7 @@ E2E 테스트는 production build를 대상으로 로컬 서버를 실행합니�
 
 ## 배포 준비
 
-Vercel에 저장소를 연결하고 Root Directory를 `frontend`로 지정합니다. Framework Preset은 Next.js, Build Command는 `npm run build`입니다. 배포 연결 뒤 Git push에 따라 빌드하도록 설정하면 됩니다. Spring 서버와 PostgreSQL은 별도로 실행하고 Vercel의 서버 환경 변수 `BACKEND_URL`에 API 주소를 지정합니다. 서버의 콘텐츠 마운트와 프론트는 동일한 커밋을 사용합니다. 계정 연결·프로젝트 생성·공개 배포는 수행하지 않았습니다.
+Vercel에 저장소를 연결하고 Root Directory를 `frontend`로 지정합니다. Framework Preset은 Next.js, Build Command는 `npm run build`입니다. 배포 연결 뒤 Git push에 따라 빌드하도록 설정하면 됩니다. Spring 서버와 PostgreSQL은 별도로 실행하고 Vercel의 서버 환경 변수 `BACKEND_URL`에 API 주소를 지정합니다. 서버의 콘텐츠 마운트와 프론트는 동일한 커밋을 사용합니다. 이번 작업에서는 GitHub 푸시까지 확인했습니다. Vercel 배포 성공 여부와 원격 Spring의 최신 콘텐츠 반영 여부는 별도 확인이 필요합니다. Spring의 GitHub 콘텐츠 조회 설정은 [backend/README.md](backend/README.md#콘텐츠-소스-로컬-vs-github)를 참고합니다.
 
 ## 디렉터리
 
