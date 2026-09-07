@@ -4,6 +4,10 @@
 
 ## 현재 진행 상태
 
+- 2026-09-07 기준 최신 UI 변경을 반영했습니다. 홈의 소개·정글 영역은 Swiper 페이드 슬라이더로 통합했으며, 마지막 슬라이드에서 다음 버튼을 누르면 첫 슬라이드로 되감기고 반대 방향도 순환합니다. `swiper` 의존성과 접근성 가능한 네비게이션·페이지네이션을 추가했습니다.
+- 글 상세는 제목 영역을 본문 목차 열과 분리해 화면 오른쪽까지 확장하고, 본문에는 상단에 고정되는 목차 열을 유지합니다. 1050px 이하에서는 목차를 숨겨 본문 가로 폭과 모바일 가독성을 확보합니다.
+- 관련 변경은 `frontend/components/home-hero.tsx`, `frontend/components/home-hero.module.css`, `frontend/components/article.tsx`, `frontend/app/globals.css`와 관련 E2E 테스트에 반영했습니다.
+
 - GitHub `main`에 화면 개편 커밋 [`8b913c5`](https://github.com/yongminkim0501/developer-blog/commit/8b913c57d5dcc67749857b3d8a5bc3462b389142) 반영 완료. 기존 글 작성 가이드 커밋 `4dd3bb7`도 함께 반영했습니다.
 - 홈 순서: 소개 → 정글 배너 → 최신 기록 3개 → 지나온 시간·수상 → 프로젝트 4개. 대표 글과 블로그 설계 스크롤 섹션은 홈에서 제거했습니다. 설계 스크롤은 프로젝트 상세에 유지합니다.
 - 지나온 시간과 수상은 데스크톱에서 한 섹션의 두 열, 모바일에서 한 열로 표시합니다. 경력·수상·프로젝트는 소개 페이지와 `components/profile-sections.tsx`를 공유합니다.

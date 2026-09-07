@@ -1010,11 +1010,15 @@ a:focus-visible {
   border-radius: 20px;
   margin-bottom: 65px;
 }
-.article-heading-layout,
+.article-heading-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: center;
+}
 .article-layout {
   display: grid;
-  grid-template-columns: minmax(0, var(--article-content-width)) 180px;
-  gap: 70px;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 52px;
   justify-content: center;
 }
 .article-heading-layout > div {
@@ -1173,11 +1177,12 @@ a:focus-visible {
 }
 .toc {
   position: sticky;
-  top: 130px;
+  top: 105px;
   align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  min-width: 0;
   font-size: 12px;
   color: var(--muted);
   line-height: 1.6;
@@ -1185,7 +1190,10 @@ a:focus-visible {
 .toc > span {
   font-size: 9px;
   letter-spacing: 1.5px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+}
+.toc a {
+  overflow-wrap: anywhere;
 }
 .toc a:hover {
   color: var(--accent);
@@ -1232,7 +1240,7 @@ a:focus-visible {
   text-align: right;
 }
 .article-page {
-  --article-content-width: 760px;
+  --article-content-width: 100%;
   padding-bottom: 90px;
 }
 .project-article-page .article-heading-layout {
@@ -1669,21 +1677,17 @@ a:focus-visible {
   .jungle-art-label {
     font-size: 58px;
   }
-  .article-page {
-    --article-content-width: 740px;
-  }
-  .article-heading-layout,
-  .article-layout {
-    grid-template-columns: minmax(0, var(--article-content-width));
-  }
-  .toc {
-    display: none;
-  }
   .about-grid {
     gap: 40px;
   }
   .about-visual > span {
     font-size: 50px;
+  }
+  .article-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .toc {
+    display: none;
   }
 }
 @media (max-width: 767px) {

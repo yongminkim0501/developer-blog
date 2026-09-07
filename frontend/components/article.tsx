@@ -129,18 +129,20 @@ export default function Article({
             </p>
           )}
         </article>
-        <aside className="toc">
-          <span>ON THIS PAGE</span>
-          {toc.map((h) => (
-            <a
-              style={{ paddingLeft: h.level === 3 ? 12 : 0 }}
-              href={`#${h.id}`}
-              key={h.id}
-            >
-              {h.text}
-            </a>
-          ))}
-        </aside>
+        {toc.length > 0 && (
+          <aside className="toc" aria-label="목차">
+            <span>ON THIS PAGE</span>
+            {toc.map((heading) => (
+              <a
+                style={{ paddingLeft: heading.level === 3 ? 12 : 0 }}
+                href={`#${heading.id}`}
+                key={heading.id}
+              >
+                {heading.text}
+              </a>
+            ))}
+          </aside>
+        )}
       </div>
       <nav className="post-pagination" aria-label="이전 다음 글">
         {previous ? (

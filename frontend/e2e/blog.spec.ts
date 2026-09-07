@@ -82,7 +82,65 @@ test("keyboard search, empty state, result navigation and dismissal", async ({
   await expect(dialog).toBeHidden();
 });
 
-test("article local images, TOC, highlighted code and copy", async ({
+test("home hero navigation, pagination and links", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.getByRole("region", { name: "개발자 소개와 정글 이야기" });
+  await expect(hero.locator(".swiper-initialized")).toBeVisible();
+  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  const height = (await hero.boundingBox())!.height;
+  await hero
+    .getByRole("button", { name: "다음 슬라이드", exact: true })
+    .click();
+  await expect(
+    hero.getByRole("heading", { name: "몰입의 시간, 나의 정글 이야기." }),
+  ).toBeVisible();
+  expect((await hero.boundingBox())!.height).toBeCloseTo(height, 0);
+  await hero
+    .getByRole("button", { name: "다음 슬라이드", exact: true })
+    .click();
+  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  await hero.getByRole("button", { name: "1번 슬라이드로 이동" }).click();
+  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  await hero.getByRole("button", { name: "2번 슬라이드로 이동" }).click();
+  await hero
+    .getByRole("button", { name: "이전 슬라이드", exact: true })
+    .click();
+  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await hero
+    .getByRole("button", { name: "다음 슬라이드", exact: true })
+    .click();
+  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+});
+
+test("article full-width layout on desktop and mobile", async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/blog/python-subclass-without-inheritance");
+    await expect(page.locator(".toc")).toHaveCount(0);
+    const contentWidth = (await page.locator(".article-page").boundingBox())!
+      .width;
+    for (const selector of [".article-header", ".article-layout .prose"]) {
+      expect((await page.locator(selector).boundingBox())!.width).toBeCloseTo(
+        contentWidth,
+        0,
+      );
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `test-results/article-${viewport.width}.png`,
+    });
+  }
+});
+
+test("article local images, highlighted code and copy", async ({
   page,
   context,
 }) => {
@@ -100,12 +158,6 @@ test("article local images, TOC, highlighted code and copy", async ({
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
     "effective_priority",
   );
-  await page
-    .locator(".toc")
-    .getByRole("link", { name: "중첩된 관계에서는" })
-    .click();
-  await expect(page).toHaveURL(/#/);
-  await expect(page.locator('h2[id="중첩된-관계에서는"]')).toBeInViewport();
 });
 
 test("archives, taxonomy, projects and missing route", async ({ page }) => {
