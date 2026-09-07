@@ -29,16 +29,14 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("home is original, images load, scroll changes project stage", async ({
-  page,
-}) => {
+test("home shows profile sections and images load", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "배우고, 만들고",
+    "개발자 김용민입니다.",
   );
-  await expect(page.locator(".post-card")).toHaveCount(5);
+  await expect(page.locator(".post-card")).toHaveCount(3);
   const images = await page
     .locator("img")
     .evaluateAll((images) =>
@@ -50,10 +48,10 @@ test("home is original, images load, scroll changes project stage", async ({
       ),
     );
   expect(images).toBe(true);
-  await page.locator('[data-step="1"]').scrollIntoViewIfNeeded();
-  await expect(page.locator(".pipeline")).toHaveClass(/active/);
-  await page.locator('[data-step="2"]').scrollIntoViewIfNeeded();
-  await expect(page.locator(".discover")).toHaveClass(/active/);
+  await expect(page.locator(".home-history .timeline-row")).toHaveCount(4);
+  await expect(page.locator(".home-projects .about-project-row")).toHaveCount(
+    4,
+  );
   expect(errors).toEqual([]);
   await page.goto("/");
   await page.screenshot({
@@ -138,27 +136,6 @@ test("archives, taxonomy, projects and missing route", async ({ page }) => {
   await expect(page.getByText("아직 쓰이지 않은")).toBeVisible();
 });
 
-test("chat streams demo response with working source and supports stop", async ({
-  page,
-}) => {
-  await page.goto("/brain");
-  await page
-    .getByRole("button", { name: "Pintos에 대해 어떤 기록이 있어?" })
-    .click();
-  await expect(page.getByRole("button", { name: "질문 보내기" })).toBeVisible({
-    timeout: 10000,
-  });
-  await expect(page.locator(".message.assistant")).toContainText("데모 응답");
-  await expect(page.locator(".sources a")).toHaveAttribute(
-    "href",
-    "/blog/pintos-priority-donation",
-  );
-  await page.getByRole("textbox", { name: "질문", exact: true }).fill("메모리");
-  await page.getByRole("button", { name: "질문 보내기" }).click();
-  await page.getByRole("button", { name: "응답 중단" }).click();
-  await expect(page.getByRole("status")).toContainText("중단");
-});
-
 test("mobile navigation, responsive overflow and persistent dark mode", async ({
   page,
 }) => {
@@ -176,7 +153,6 @@ test("mobile navigation, responsive overflow and persistent dark mode", async ({
     "/blog",
     "/blog/pintos-priority-donation",
     "/projects/dev-log",
-    "/brain",
   ]) {
     await page.goto(url);
     expect(
@@ -204,12 +180,12 @@ test("mobile navigation, responsive overflow and persistent dark mode", async ({
 
 test("reduced motion keeps project content readable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await page.goto("/projects/dev-log");
   await expect(page.locator(".story-visual")).toHaveCSS("position", "relative");
   await expect(page.locator(".story-step")).toHaveCount(3);
 });
 
-test("search outage is visible while the article remains readable", async ({
+test("search outage is visible while the home page remains readable", async ({
   page,
 }) => {
   await page.route("**/api/v1/search?*", (route) =>
@@ -224,11 +200,13 @@ test("search outage is visible while the article remains readable", async ({
       },
     }),
   );
-  await page.goto("/blog/pintos-priority-donation");
+  await page.goto("/");
   await page.getByRole("button", { name: "글 검색" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "서버에 연결하지 못했어요.",
   );
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Pintos");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "개발자 김용민입니다.",
+  );
 });

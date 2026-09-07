@@ -59,7 +59,6 @@ export default function RootLayout({
               <span>© 2026 Yongmin. Built with curiosity.</span>
               <div>
                 <Link href="/categories">주제별 기록</Link>
-                <Link href="/brain">Ask my brain ↗</Link>
               </div>
               <span>
                 계속 배우는 중 <i className="status-dot" />

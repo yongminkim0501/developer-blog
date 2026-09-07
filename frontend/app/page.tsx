@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ArrowDown } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { posts } from "@/lib/content";
-import { PostCard, PostGrid } from "@/components/post-card";
-import ProjectStory from "@/components/project-story";
+import { PostGrid } from "@/components/post-card";
+import {
+  ExperienceList,
+  AwardsList,
+  ProfileProjects,
+} from "@/components/profile-sections";
 export default function Home() {
   const all = posts();
-  const featured = all.filter((p) => p.featured).slice(0, 2);
   return (
     <main>
       <section className="shell home-intro">
@@ -18,7 +21,11 @@ export default function Home() {
           안녕하세요
           <br />
           <span>
-            개발자 <Link href="/about" className="name-highlight">김용민</Link>입니다.
+            개발자{" "}
+            <Link href="/about" className="name-highlight">
+              김용민
+            </Link>
+            입니다.
           </span>
         </h1>
         <div className="intro-bottom">
@@ -31,37 +38,6 @@ export default function Home() {
             BACKEND <span>/</span> SYSTEMS
           </div>
         </div>
-      </section>
-      <section className="shell featured-section">
-        <div className="section-heading">
-          <h2>
-            깊이 들여다본 이야기<span className="heading-dot">.</span>
-          </h2>
-          <Link href="/blog">
-            모든 기록 <ArrowUpRight size={18} />
-          </Link>
-        </div>
-        <div className="featured-grid">
-          {featured.map((post) => (
-            <PostCard post={post} large key={post.slug} />
-          ))}
-        </div>
-      </section>
-      <section className="shell section recent-section">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">RECENT NOTES</span>
-            <h2>차곡차곡 쌓이는 기록</h2>
-          </div>
-          <Link href="/blog">
-            더 보기 <ArrowRight size={18} />
-          </Link>
-        </div>
-        <PostGrid
-          items={all
-            .filter((p) => !featured.some((f) => f.slug === p.slug))
-            .slice(0, 3)}
-        />
       </section>
       <section className="jungle-feature">
         <div className="shell jungle-feature-inner">
@@ -99,37 +75,44 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="shell section home-project">
+      <section className="shell section recent-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">IDEAS INTO REALITY</span>
-            <h2>생각을 코드로 옮기는 일</h2>
+            <span className="eyebrow">RECENT NOTES</span>
+            <h2>차곡차곡 쌓이는 기록</h2>
           </div>
-          <Link href="/projects">
-            프로젝트 <ArrowUpRight size={18} />
+          <Link href="/blog">
+            더 보기 <ArrowRight size={18} />
           </Link>
         </div>
-        <div className="project-intro">
-          <span>PROJECT 01 / PERSONAL BLOG</span>
-          <p>이 공간도, 하나의 프로젝트입니다.</p>
-          <span className="scroll-hint">
-            스크롤하며 살펴보기 <ArrowDown size={15} />
-          </span>
-        </div>
-        <ProjectStory />
-        <Link className="project-detail-link" href="/projects/dev-log">
-          이 블로그의 설계 이야기 읽기 <ArrowUpRight size={19} />
-        </Link>
+        <PostGrid items={all.slice(0, 3)} />
       </section>
-      <section className="shell brain-banner">
-        <div>
-          <span className="eyebrow">A CONVERSATION WITH MY NOTES</span>
-          <h2>기록 속에서 답을 찾아볼까요?</h2>
-          <p>내가 배우고 만든 것들에 대해 질문해보세요.</p>
+      <section className="shell section home-history">
+        <div className="section-heading">
+          <h2>지나온 시간과 수상</h2>
+          <Link href="/about">
+            소개 더 보기 <ArrowUpRight size={18} />
+          </Link>
         </div>
-        <Link href="/brain">
-          Ask my brain <ArrowUpRight size={22} />
-        </Link>
+        <div className="home-history-grid">
+          <div>
+            <h3>지나온 시간</h3>
+            <ExperienceList />
+          </div>
+          <div>
+            <h3>수상</h3>
+            <AwardsList />
+          </div>
+        </div>
+      </section>
+      <section className="shell section home-projects">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">SIDE PROJECTS</span>
+            <h2>프로젝트</h2>
+          </div>
+        </div>
+        <ProfileProjects />
       </section>
     </main>
   );

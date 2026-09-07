@@ -29,8 +29,8 @@ http://localhost:3000 에서 확인합니다. Spring API는 localhost:8080, Post
 - Spring Boot 4.1.1 / Java 21 / PostgreSQL 17 / JPA / Flyway
 - MDX 공개 메타데이터 자동 인덱싱, 실제 검색 API와 Next.js 서버 프록시
 - 일별 중복 판정을 적용한 글 조회수, 인증된 관리자 통계·재인덱싱 API
-- SearchService / ViewService의 HTTP Adapter, ChatService의 데모 Adapter
-- 데모임을 표시하는 Brain 스트리밍, 출처 링크, 중단 및 오류 상태
+- SearchService / ViewService의 HTTP Adapter
+- 챗봇은 현재 제공하지 않으며, 추후 검색 기능과 통합 예정
 
 초기 학습 글 5개는 **샘플 콘텐츠**입니다. 작성자의 실제 경험으로 가장하지 않으며, `demo: true` 표시를 사용합니다. 프로젝트 소개는 현재 설계와 구현 범위를 설명합니다. 실제 글 최소 3개 작성, GitHub/Vercel 연결 및 실제 배포는 아직 완료되지 않았습니다.
 

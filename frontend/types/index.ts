@@ -30,28 +30,12 @@ export interface SearchItem {
   category: string;
   tags: string[];
 }
-export interface Source {
-  slug: string;
-  title: string;
-  url: string;
-  heading?: string;
-}
-export type ChatEvent =
-  | { type: "start"; data: { requestId: string } }
-  | { type: "token"; data: { content: string } }
-  | { type: "source"; data: Source }
-  | { type: "done"; data: { requestId: string; finishReason: "stop" } }
-  | { type: "error"; data: { code: string; message: string } };
 export interface SearchService {
   search(
     query: string,
     signal?: AbortSignal,
   ): Promise<ApiResult<{ query: string; results: SearchItem[] }>>;
 }
-export interface ChatService {
-  stream(message: string, signal?: AbortSignal): AsyncIterable<ChatEvent>;
-}
-
 export interface ViewCount {
   slug: string;
   views: number;

@@ -3,15 +3,9 @@ import { ThemeProvider } from "next-themes";
 import { createContext, useContext, useMemo } from "react";
 import { createMockServices } from "@/lib/api/mock";
 import { httpSearch, httpViews } from "@/lib/api/http";
-import type {
-  SearchItem,
-  SearchService,
-  ChatService,
-  ViewService,
-} from "@/types";
+import type { SearchItem, SearchService, ViewService } from "@/types";
 const Services = createContext<{
   search: SearchService;
-  chat: ChatService;
   views: ViewService | null;
 } | null>(null);
 export function useServices() {
@@ -30,7 +24,7 @@ export function Providers({
     const mock = createMockServices(items);
     if (process.env.NEXT_PUBLIC_DATA_MODE === "mock")
       return { ...mock, views: null };
-    return { search: httpSearch, chat: mock.chat, views: httpViews };
+    return { search: httpSearch, views: httpViews };
   }, [items]);
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>

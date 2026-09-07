@@ -126,9 +126,6 @@ export default function Header() {
                       <ArrowUpRight size={20} />
                     </Link>
                   ))}
-                  <Link href="/brain" onClick={() => setMenu(false)}>
-                    Ask my brain <ArrowUpRight size={20} />
-                  </Link>
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>

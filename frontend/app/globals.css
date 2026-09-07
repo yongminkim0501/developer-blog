@@ -10,11 +10,11 @@
   --soft: #eef1ff;
 }
 html.dark {
-  --bg: #121518;
-  --surface: #1c2025;
+  --bg: #27272a;
+  --surface: #303033;
   --text: #eef0f4;
   --muted: #9ba3af;
-  --line: #30353d;
+  --line: #3f3f46;
   --accent: #97a8ff;
   --soft: #242c48;
 }
@@ -190,10 +190,7 @@ a:focus-visible {
   margin: 34px 0 30px;
 }
 .home-intro h1 > span {
-  color: #858b94;
-}
-.dark .home-intro h1 > span {
-  color: #949daa;
+  color: var(--accent);
 }
 .name-highlight {
   display: inline-block;
@@ -206,7 +203,7 @@ a:focus-visible {
 }
 .name-highlight:hover {
   background: var(--soft);
-  color: var(--text);
+  color: var(--accent);
 }
 .intro-bottom {
   display: flex;
@@ -258,14 +255,9 @@ a:focus-visible {
 .heading-dot {
   color: var(--accent);
 }
-.featured-section {
-  border-top: 1px solid var(--line);
-  padding-top: 29px;
-}
-.featured-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+.dark .section-heading h2,
+.dark .section-heading > a {
+  color: #fff;
 }
 .post-card {
   min-width: 0;
@@ -362,9 +354,6 @@ a:focus-visible {
 .section {
   padding-top: 110px;
   padding-bottom: 40px;
-}
-.recent-section {
-  padding-bottom: 105px;
 }
 .jungle-feature {
   background: #f0f4ed;
@@ -776,38 +765,6 @@ a:focus-visible {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-}
-.brain-banner {
-  margin-block: 65px 95px;
-  padding: 40px 45px;
-  border-radius: 18px;
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 25px;
-}
-.brain-banner .eyebrow {
-  color: var(--muted);
-  font-size: 9px;
-}
-.brain-banner h2 {
-  font-size: 25px;
-  font-weight: 650;
-  margin: 15px 0 10px;
-}
-.brain-banner p {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0;
-}
-.brain-banner > a {
-  display: flex;
-  gap: 25px;
-  align-items: center;
-  font-size: 15px;
-  font-weight: 550;
-  white-space: nowrap;
 }
 .site-footer {
   border-top: 1px solid var(--line);
@@ -1303,167 +1260,6 @@ a:focus-visible {
   font-size: 32px;
   margin: 23px 0 20px;
 }
-.brain-page {
-  max-width: 850px;
-  min-height: 80vh;
-  padding-bottom: 70px;
-}
-.brain-page .page-heading {
-  text-align: center;
-  padding-bottom: 15px;
-}
-.brain-page .page-heading h1 {
-  font-size: 43px;
-}
-.demo-badge {
-  font-size: 8px;
-  padding: 4px 7px;
-  background: var(--soft);
-  color: var(--accent);
-  border-radius: 4px;
-  letter-spacing: 1px;
-}
-.brain-space {
-  max-width: 710px;
-  margin: 0 auto;
-}
-.brain-welcome {
-  text-align: center;
-  padding: 35px 0 25px;
-}
-.brain-symbol {
-  display: inline-grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  background: var(--soft);
-  color: var(--accent);
-  border-radius: 24px;
-  margin-bottom: 8px;
-}
-.brain-welcome h2 {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 20px 0 15px;
-}
-.brain-welcome p {
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.8;
-}
-.suggestions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 9px;
-  max-width: 390px;
-  margin: 25px auto;
-}
-.suggestions button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px 15px;
-  background: var(--bg);
-  font-size: 12px;
-  text-align: left;
-}
-.suggestions button:hover {
-  background: var(--surface);
-}
-.brain-input {
-  display: flex;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  padding: 12px;
-}
-.brain-input:focus-within {
-  border-color: var(--accent);
-}
-.brain-input input {
-  background: none;
-  border: 0;
-  outline: 0;
-  width: 100%;
-  padding: 5px 10px;
-  font-size: 14px;
-  min-width: 0;
-  color: var(--text);
-}
-.brain-input button {
-  width: 37px;
-  height: 37px;
-  flex-shrink: 0;
-  background: var(--text);
-  color: var(--bg);
-  border: 0;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-}
-.brain-notice {
-  text-align: center;
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 14px;
-}
-.messages {
-  max-height: 550px;
-  overflow-y: auto;
-  padding: 20px 10px;
-  margin: 25px 0;
-  scroll-behavior: smooth;
-}
-.message {
-  margin: 25px 0;
-  max-width: 93%;
-}
-.message > small {
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--muted);
-}
-.message p {
-  font-size: 15px;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  margin: 8px 0;
-}
-.message.user {
-  background: var(--surface);
-  padding: 15px 20px;
-  border-radius: 14px;
-  margin-left: auto;
-  width: fit-content;
-}
-.message.assistant {
-  padding: 10px;
-}
-.sources {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 20px;
-}
-.sources > small {
-  font-size: 10px;
-  color: var(--muted);
-}
-.sources a {
-  display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--accent);
-  align-items: center;
-}
-.chat-error {
-  font-size: 12px;
-  color: var(--muted);
-}
 .about-page {
   padding-bottom: 110px;
 }
@@ -1564,6 +1360,20 @@ a:focus-visible {
   font-size: 13px;
   color: var(--muted);
   margin-top: 6px;
+}
+.home-history-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 48px;
+}
+.home-history-grid h3 {
+  margin: 0 0 20px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.home-history .timeline-row {
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 .stack-groups {
   display: flex;
@@ -1869,6 +1679,10 @@ a:focus-visible {
   }
 }
 @media (max-width: 767px) {
+  .home-history-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
   .shell {
     width: calc(100% - 40px);
   }
@@ -1929,13 +1743,6 @@ a:focus-visible {
     font-size: 11px;
     gap: 6px;
   }
-  .featured-section {
-    padding-top: 25px;
-  }
-  .featured-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
   .post-cover,
   .post-card.large .post-cover {
     aspect-ratio: 1.6;
@@ -1976,9 +1783,6 @@ a:focus-visible {
   .section {
     padding-top: 65px;
     padding-bottom: 25px;
-  }
-  .recent-section {
-    padding-bottom: 60px;
   }
   .jungle-feature-inner {
     grid-template-columns: 1fr;
@@ -2083,28 +1887,6 @@ a:focus-visible {
   .project-detail-link {
     margin-top: 10px;
     font-size: 13px;
-  }
-  .brain-banner {
-    margin-block: 40px 60px;
-    padding: 30px 24px;
-    display: block;
-  }
-  .brain-banner .eyebrow {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-  .brain-banner h2 {
-    font-size: 23px;
-    line-height: 1.35;
-    word-break: keep-all;
-  }
-  .brain-banner p {
-    font-size: 12px;
-  }
-  .brain-banner > a {
-    font-size: 14px;
-    justify-content: space-between;
-    margin-top: 30px;
   }
   .site-footer {
     padding-top: 30px;
@@ -2263,26 +2045,6 @@ a:focus-visible {
   }
   .prose .story-step h3 {
     font-size: 24px;
-  }
-  .brain-page .page-heading h1 {
-    font-size: 34px;
-  }
-  .brain-welcome {
-    padding-top: 25px;
-  }
-  .brain-welcome h2 {
-    font-size: 22px;
-  }
-  .brain-input input {
-    font-size: 12px;
-    padding-left: 3px;
-  }
-  .brain-notice {
-    font-size: 9px;
-    line-height: 1.6;
-  }
-  .message p {
-    font-size: 14px;
   }
   .about-grid {
     grid-template-columns: 1fr;
