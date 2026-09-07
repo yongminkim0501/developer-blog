@@ -952,8 +952,7 @@ a:focus-visible {
   margin-top: 40px;
 }
 .article-header {
-  max-width: 850px;
-  margin: 60px auto 45px;
+  margin: 60px 0 45px;
 }
 .article-header .eyebrow {
   color: var(--accent);
@@ -1011,11 +1010,15 @@ a:focus-visible {
   border-radius: 20px;
   margin-bottom: 65px;
 }
+.article-heading-layout,
 .article-layout {
   display: grid;
-  grid-template-columns: minmax(0, 760px) 180px;
+  grid-template-columns: minmax(0, var(--article-content-width)) 180px;
   gap: 70px;
   justify-content: center;
+}
+.article-heading-layout > div {
+  min-width: 0;
 }
 .prose {
   font-size: 17px;
@@ -1229,7 +1232,11 @@ a:focus-visible {
   text-align: right;
 }
 .article-page {
+  --article-content-width: 760px;
   padding-bottom: 90px;
+}
+.project-article-page .article-heading-layout {
+  grid-template-columns: minmax(0, var(--article-content-width));
 }
 .project-article-layout {
   display: block;
@@ -1237,8 +1244,8 @@ a:focus-visible {
 .project-article-layout > .toc {
   display: none;
 }
-.project-prose > * {
-  max-width: 760px;
+.prose.project-prose > * {
+  max-width: var(--article-content-width);
   margin-inline: auto;
 }
 .project-prose > .project-story {
@@ -1662,14 +1669,15 @@ a:focus-visible {
   .jungle-art-label {
     font-size: 58px;
   }
+  .article-page {
+    --article-content-width: 740px;
+  }
+  .article-heading-layout,
   .article-layout {
-    grid-template-columns: minmax(0, 740px);
+    grid-template-columns: minmax(0, var(--article-content-width));
   }
   .toc {
     display: none;
-  }
-  .article-header {
-    max-width: 740px;
   }
   .about-grid {
     gap: 40px;
@@ -1974,7 +1982,7 @@ a:focus-visible {
     margin: 20px 0 25px;
   }
   .article-header {
-    margin: 40px auto 30px;
+    margin: 40px 0 30px;
   }
   .article-header h1 {
     font-size: 35px;

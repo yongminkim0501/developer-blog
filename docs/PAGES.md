@@ -58,6 +58,7 @@ frontend/public/content/{collection}/{slug}/...
 
 ### `/blog/[slug]` — 글 상세 (`app/blog/[slug]/page.tsx` → `components/article.tsx`)
 
+- 제목·설명·작성자·뒤로 가기·대표 이미지는 `article-heading-layout`에서 본문과 같은 그리드를 사용합니다. `--article-content-width`는 기본 760px, 1050px 이하에서는 740px이며 화면이 좁으면 가용 너비에 맞춰 줄어듭니다. 데스크톱의 목차 열은 180px, 본문과의 간격은 70px입니다.
 - `generateStaticParams`가 `posts()`의 모든 slug로 정적 페이지를 미리 생성합니다.
 - 이미지가 나오는 지점 두 곳:
   1. **히어로 이미지**: `post.thumbnail`이 있으면 글 제목 아래 `<img className="article-hero">`로 큰 이미지 표시.
@@ -81,6 +82,7 @@ frontend/public/content/{collection}/{slug}/...
 
 ### `/projects/[slug]` — 프로젝트 상세 (`app/projects/[slug]/page.tsx` → `Article`)
 
+- 제목·대표 이미지와 일반 본문은 같은 콘텐츠 너비로 중앙 정렬합니다. `<ProjectStory />`는 기존의 넓은 영역을 유지합니다.
 - `allContent("projects")`에서 slug로 글을 찾아 `/blog/[slug]`와 동일한 `Article` 컴포넌트를 재사용합니다. 히어로 이미지·본문 이미지 처리 방식도 동일합니다.
 - 현재 `<ProjectStory />` 컴포넌트는 MDX 안에서 사용 가능하지만(README에 명시), 이는 "이 블로그(dev-log) 프로젝트" 전용 소개 컴포넌트이고 이미지 대신 스크롤 애니메이션으로 스토리를 보여줍니다. 다른 프로젝트 글에서 그대로 쓰면 안 되고, 프로젝트별로 맞는 설명 방식을 새로 작성해야 합니다.
 - 관련 글(`related`)은 `posts()`(blog+jungle)에서 `project === slug`인 글, 즉 "이 프로젝트를 하면서 쓴 글" 목록입니다.

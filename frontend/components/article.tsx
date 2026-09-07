@@ -22,36 +22,41 @@ export default function Article({
 }) {
   const toc = headings(post.body);
   return (
-    <main className="shell article-page">
-      <Link
-        className="back-link"
-        href={post.collection === "projects" ? "/projects" : "/blog"}
-      >
-        ← {post.collection === "projects" ? "프로젝트" : "모든 기록"}
-      </Link>
-      <header className="article-header">
-        <div className="eyebrow">
-          {post.category} <span>· {dateLabel(post.date)}</span>
-        </div>
-        <h1>{post.title}</h1>
-        <p>{post.description}</p>
-        <div className="article-author">
-          <span className="avatar">Y</span>
-          <strong>Yongmin</strong>
-          <span>{post.readingTime}분 읽기</span>
-          {post.collection !== "projects" && post.status === "published" && (
-            <ViewCount slug={post.slug} />
+    <main
+      className={`shell article-page ${post.collection === "projects" ? "project-article-page" : ""}`}
+    >
+      <div className="article-heading-layout">
+        <div>
+          <Link
+            className="back-link"
+            href={post.collection === "projects" ? "/projects" : "/blog"}
+          >
+            ← {post.collection === "projects" ? "프로젝트" : "모든 기록"}
+          </Link>
+          <header className="article-header">
+            <div className="eyebrow">
+              {post.category} <span>· {dateLabel(post.date)}</span>
+            </div>
+            <h1>{post.title}</h1>
+            <p>{post.description}</p>
+            <div className="article-author">
+              <span className="avatar">Y</span>
+              <strong>Yongmin</strong>
+              <span>{post.readingTime}분 읽기</span>
+              {post.collection !== "projects" &&
+                post.status === "published" && <ViewCount slug={post.slug} />}
+              {post.demo && <span className="sample-label">샘플 콘텐츠</span>}
+            </div>
+          </header>
+          {post.thumbnail && (
+            <img
+              className="article-hero"
+              src={post.thumbnail}
+              alt={`${post.title} 대표 이미지`}
+            />
           )}
-          {post.demo && <span className="sample-label">샘플 콘텐츠</span>}
         </div>
-      </header>
-      {post.thumbnail && (
-        <img
-          className="article-hero"
-          src={post.thumbnail}
-          alt={`${post.title} 대표 이미지`}
-        />
-      )}
+      </div>
       <div
         className={`article-layout ${post.collection === "projects" ? "project-article-layout" : ""}`}
       >
