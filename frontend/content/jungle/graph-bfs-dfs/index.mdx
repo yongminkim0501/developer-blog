@@ -1,0 +1,189 @@
+---
+title: "3주차 - 그래프 탐색, BFS와 DFS를 직접 구현하며 비교"
+description: "인접 리스트로 무방향/방향 그래프를 만드는 것부터, Queue로 너비 우선 탐색하는 BFS와 재귀로 깊이 우선 탐색하는 DFS를 각각 구현하고 장단점을 비교. 시간 복잡도는 둘 다 O(V+E)."
+category: "Data Structure & Algorithm"
+date: "2026-09-09"
+tags: ["그래프", "bfs", "dfs", "탐색"]
+project: "krafton-jungle"
+week: 3
+status: "published"
+thumbnail: "./thumbnail.png"
+---
+
+## 그래프
+
+```python
+def create_graph(vertices, edges, directed=False):
+    graph = {}
+
+    for edge in edges:
+        if edge[0] not in graph:
+            graph[edge[0]] = []
+
+        if edge[1] not in graph:
+            graph[edge[1]] = []
+
+    def add(start, end):
+        graph[start].append(end)
+
+    if directed:
+        for edge in edges:
+            add(edge[0], edge[1])
+    else:
+        for edge in edges:
+            add(edge[0], edge[1])
+            add(edge[1], edge[0])
+
+    return graph
+
+# 테스트 케이스
+if __name__ == "__main__":
+    # 테스트 케이스 1: 무방향 그래프
+    vertices = 4
+    edges = [(0, 1), (0, 2), (1, 2), (2, 3)]
+
+    print("=== 무방향 그래프 ===")
+    graph = create_graph(vertices, edges, directed=False)
+    for vertex, neighbors in graph.items():
+        print(f"{vertex} → {neighbors}")
+    print()
+
+    # 테스트 케이스 2: 방향 그래프
+    print("=== 방향 그래프 ===")
+    graph_directed = create_graph(vertices, edges, directed=True)
+    for vertex, neighbors in graph_directed.items():
+        print(f"{vertex} → {neighbors}")
+
+```
+
+### 무방향 그래프
+
+무방향 그래프는 방향이 없기 때문에 **Node** 사이에 연결이 되어있다면 탐색 시 서로 접근이 가능하다.
+
+### 방향 그래프
+
+방향 그래프는 방향이 있기 때문에 출발 노드와 도착 노드가 서로 정해져 있으며 출발에서 도착으로 가는 것은 가능하지만 반대 방향은 불가능하다.
+
+### BFS
+
+```python
+from collections import deque
+
+def bfs(graph, start):
+    is_visit = [False for _ in range(len(graph))]
+    is_visit[start] = True
+
+    visited = []
+    visited.append(start)
+
+    q = deque()
+
+    for node in graph:
+        for edge in graph[node]:
+            if (is_visit[edge] == False):
+                q.append(edge)
+                is_visit[edge] = True
+    while q:
+        visited.append(q.popleft())
+
+    return visited
+
+# 테스트 케이스
+if __name__ == "__main__":
+    # 그래프 생성
+    graph = {
+        0: [1, 2],
+        1: [0, 2],
+        2: [0, 1, 3],
+        3: [2]
+    }
+
+    print("=== BFS (너비 우선 탐색) ===")
+    result = bfs(graph, 0)
+    print(f"시작 정점: 0")
+    print(f"방문 순서: {result}")
+```
+
+알고리즘은 생각보다 단순하다.
+
+지금부터 우리의 모든 접근은 **Queue**를 통해서 한다. 여기서 한 **Node**에 여러 **Edge가 연결되어 있을 수 있기 때문에 가장 먼저 접근하는 Edge를 visit 처리하고 중복 방문하지 않게 한다.**
+
+그 후는 똑같이 진행된다. 만약 방문한 적이 없다면 계속 **Queue**에 넣고 **is_visit[edge]**를 **True**로 만든다.
+
+여기서 **BFS**는 이름 그대로 **너비 우선 탐색**이다.
+
+특정 한 **Node**에 연결된 **Edge**를 먼저 쭈욱 탐색하기 때문에 깊이가 깊어지지 않고 옆으로 넓어지게 된다.
+
+그렇기 때문에 **BFS**이다.
+
+### DFS
+
+```python
+def dfs(graph, start, visited=None):
+    is_visited = [False for_ in range(len(graph))]
+
+    visited = []
+
+    def dfs_iter(graph, start, visited):
+        visited.append(start)
+        is_visited[start] = True        
+        for node in graph:
+            for edge in graph[node]:
+                if is_visited[edge] == False:
+                    dfs_iter(graph, edge, visited)
+
+    dfs_iter(graph, start, visited)
+    return visited
+    
+ if __name__ == "__main__":
+    # 그래프 생성
+    graph = {
+        0: [1, 2],
+        1: [0, 2],
+        2: [0, 1, 3],
+        3: [2]
+    }
+
+    print("=== DFS (깊이 우선 탐색) ===")
+    result = dfs(graph, 0)
+    print(f"시작 정점: 0")
+    print(f"방문 순서: {result}")
+```
+
+내부에다가 **dfs_iter**을 통하여 재귀를 돌렸기 때문에 그 외부의 **visited**는 사용하지 않고 내부에서 지역변수로 사용하였다.
+
+구조의 차이는 **dfs_iter**함수에서 처음 접근할 경우 **start**를 **visit** 배열 안에 추가하고 **is_visited** 배열에 **True**로 바꾸어 추가한다. 만약 방문하지 않은 엣지가 걸린다면 다시 재귀를 돌린다.
+
+이 방식의 경우 **Node**, **Edge**에서 한 **Node**에 연결된 **Edge 전체**를 먼저 다 바라보는 것이 아닌 재귀를 통하여 **한번도 가지 않은 Edge**에 대해서 연결된 다음 **Edge**로 다시 가게 된다.
+
+그렇기 때문에 깊이로 계속 탐색이 일어나게 되고 깊이 우선 탐색이라는 이름이 붙게 된다.
+
+### BFS와 DFS의 장단점
+
+**BFS**
+
+**장점**
+
+- 가중치 없는 그래프에서 최단 경로 보장
+- 시작점에서 가까운 답 찾을 때 빠름
+- 무한히 깊이 빠지지 않음
+
+**단점**
+
+- **Queue**로 인하여 메모리를 많이 먹음
+- 깊은 곳의 답을 찾기 위해선 그 위의 모든 레벨에 대하여 접근해야함
+
+#### DFS
+
+**장점**
+
+- 메모리가 적게 든다
+- 재귀로 짜면 → 코드가 짧고 직관적임
+- 경로 전체 보는 문제에 잘맞음
+
+**단점**
+
+- 찾은 경로가 최단이라는 보장이 없음
+- 깊이가 깊거나 무한이면 오버플로, 무한 루프에 빠짐 / 재귀 한도가 1000이 **Default**라 빨리 터짐
+
+시간 복잡도는 **O(V + E)** 둘다 같음
