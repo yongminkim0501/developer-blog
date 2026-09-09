@@ -28,6 +28,11 @@ export function PostCard({
       </Link>
       <div className="post-category">
         {post.category}
+        {post.source && (
+          <span className="post-source" aria-label={`출처: ${post.source}`}>
+            {post.source}
+          </span>
+        )}
         {post.demo && <span>샘플 기록</span>}
       </div>
       <h3>

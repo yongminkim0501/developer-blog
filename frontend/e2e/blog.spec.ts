@@ -160,8 +160,14 @@ test("home hero navigation, pagination and links", async ({ page }) => {
     for (const category of await page
       .locator(".post-category")
       .allTextContents()) {
-      expect(category).toBe("Tech Blog Review");
+      expect(category).toContain("Tech Blog Review");
     }
+    await expect(
+      page
+        .locator(".post-card")
+        .filter({ hasText: "토스 네뷸라" })
+        .getByLabel("출처: 토스"),
+    ).toHaveText("토스");
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

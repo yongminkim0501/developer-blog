@@ -318,6 +318,13 @@ a:focus-visible {
   font-weight: 400;
   letter-spacing: 0;
 }
+.post-category > .post-source {
+  padding: 3px 9px;
+  border-radius: 50px;
+  background: var(--soft);
+  color: var(--accent);
+  font-weight: 650;
+}
 .post-card h3 {
   font-size: 21px;
   font-weight: 670;

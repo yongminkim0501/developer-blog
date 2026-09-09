@@ -69,6 +69,7 @@ thumbnail: "./thumbnail.svg"
 - 홈은 `featured` 여부와 관계없이 최신 글 3개를 보여줍니다. `featured` 필드는 현재 홈 노출에 사용하지 않습니다.
 - `series`로 시리즈를 묶습니다. 정글 기록은 `project: "krafton-jungle"`, `week: 4`처럼 분류합니다.
 - 기술 블로그를 읽고 정리한 글은 `category: "Tech Blog Review"`로 작성하면 홈의 세 번째 슬라이드에서 연결되는 `/tech-blog` 페이지에 최신순으로 모입니다.
+- `source: "토스"`처럼 원본 기술 블로그의 회사명을 지정하면 글 카드에 출처 배지가 표시됩니다.
 - 정글 글은 `content/jungle/`에서도 작성하며, 상세 URL은 `/blog/{slug}`입니다. blog와 jungle 사이에 slug가 겹치지 않게 작성합니다.
 - 프로젝트는 `content/projects/{slug}/index.mdx`에 작성합니다. `status`는 `in-progress` 또는 `completed`, `tech`와 선택적인 `github`를 사용합니다.
 - 코드 블록에 `title="filename.ts"`를 넣으면 파일명이 표시됩니다.
