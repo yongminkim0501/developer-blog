@@ -1,0 +1,241 @@
+---
+title: "3주차 - 재귀로 짜는 이진 트리 순회, 그리고 BST가 성능을 보장하는 이유"
+description: "전위/중위/후위 순회를 재귀로 구현하며 결과 배열을 함수 밖에 두는 대신 중첩 함수로 감싸는 방법부터, 이진 트리 구조 자체는 탐색 성능을 보장하지 않는다는 것, 균형이 무너지면 O(log n)이 O(n)이 되는 이유, 캐시 지역성 때문에 DB가 이진 트리 대신 B+트리를 쓰는 이유까지."
+category: "Data Structure & Algorithm"
+date: "2026-09-09"
+tags: ["이진트리", "재귀", "bst", "b+트리"]
+project: "krafton-jungle"
+week: 3
+status: "published"
+thumbnail: "./thumbnail.png"
+---
+
+## 요약
+
+- 재귀는 정말 말하듯이 짜는게 맞다고 생각한다.
+- 이진 트리 자체로만 놓고 볼 때는 구조적 제약만 있기 때문에 탐색 성능 보장을 의미하지는 않는다.
+- RB트리 혹은 AVL트리가 아닌 이상 최악의 경우 한쪽으로 데이터가 몰리게 되며 시간 복잡도 O(log n)이 아닌 O(n)이 되게 된다.
+- 캐시의 지역성이 좋지 않아 실제 O(log n)이어도 배열 기반 구조보다 속도가 느릴 수 있고, 이러한 이유 때문에 DB에서 이진 트리 대신 B+트리를 사용한다.
+
+## 전위·중위·후위 순회를 재귀로 구현한 코드
+
+아래의 구현 코드는 **BinaryTree**를 구현하고 그 안에서 **전위, 중위, 후위** 순회를 구현한 것이다.
+
+```python
+class TreeNode:
+    """이진 트리 노드"""
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+result = []
+def preorder(root):
+    # 요구조건 : root -> 왼쪽 -> 오른쪽
+    if root is None:
+        return []
+    result.append(root.value)
+    preorder(root.left)
+    preorder(root.right)
+
+    return result
+
+result2 = []
+def inorder(root):
+    """중위 순회: 왼쪽 → 루트 → 오른쪽"""
+    if root is None:
+        return []
+    inorder(root.left)
+    result2.append(root.value)
+    inorder(root.right)
+
+    return result2
+
+result3 = []
+def postorder(root):
+    if root is None:
+        return []
+
+    postorder(root.left)
+    postorder(root.right)
+    result3.append(root.value)
+
+    return result3
+# 테스트 케이스
+if __name__ == "__main__":
+    # 트리 생성:
+    #       1
+    #      / \
+    #     2   3
+    #    / \
+    #   4   5
+    root = TreeNode(1)
+    root.left = TreeNode(2)
+    root.right = TreeNode(3)
+    root.left.left = TreeNode(4)
+    root.left.right = TreeNode(5)
+
+    print("=== 이진 트리 순회 ===")
+    print(f"전위 순회: {preorder(root)}")
+    print(f"중위 순회: {inorder(root)}")
+    print(f"후위 순회: {postorder(root)}")
+```
+
+요즘 재귀로 구현하는 것이 뭔가 좋아서 다 거의 대부분을 재귀로 구현하는데 배열을 함수 밖에다가 그냥 선언했다.
+
+## 결과 배열을 함수 밖에 두지 않으려면 중첩 함수로 감싼다
+
+만약 결과 배열을 함수 밖에 선언한 방식으로 안쓸거면
+
+```python
+def preorder(root):
+    # 요구조건 : root -> 왼쪽 -> 오른쪽
+    result = []
+    def preorder_iter(root):
+        if root is None:
+            return []
+        result.append(root.value)
+        preorder_iter(root.left)
+        preorder_iter(root.right)
+    preorder_iter(root)
+    return result
+```
+
+이런 식의 재귀로 적어도 잘 돌아간다.
+
+합치면 이런 식의 구현이 된다.
+
+```python
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+def preorder(root):
+    result = []
+    def preorder_iter(root):
+        if root is None:
+            return []
+        result.append(root.value)
+        preorder_iter(root.left)
+        preorder_iter(root.right)
+    preorder_iter(root)
+    return result
+
+def inorder(root):
+    result = []
+    def inorder_iter(root):
+        if root is None:
+            return []
+        inorder_iter(root.left)
+        result.append(root.value)
+        inorder_iter(root.right)
+
+    inorder_iter(root)
+    return result
+
+def postorder(root):
+    result = []
+    def postorder_iter(root):
+        if root is None:
+            return []
+
+        postorder_iter(root.left)
+        postorder_iter(root.right)
+        result.append(root.value)
+
+    postorder_iter(root)
+    return result
+
+# 테스트 케이스
+if __name__ == "__main__":
+    # 트리 생성:
+    #       1
+    #      / \
+    #     2   3
+    #    / \
+    #   4   5
+    root = TreeNode(1)
+    root.left = TreeNode(2)
+    root.right = TreeNode(3)
+    root.left.left = TreeNode(4)
+    root.left.right = TreeNode(5)
+
+    print("=== 이진 트리 순회 ===")
+    print(f"전위 순회: {preorder(root)}")
+    print(f"중위 순회: {inorder(root)}")
+    print(f"후위 순회: {postorder(root)}")
+```
+
+## 재귀는 말하듯이 짜는 게 맞다고 생각한다
+
+이외의 이진 트리의 재귀 자체로만 이야기를 한다면 재귀는 정말 말하듯이 짜는게 맞다고 생각한다. 사람이 생각하는 방식 그대로 접목 시킬 때 그대로 출력 값이 나온다.
+
+## 이진 트리 구조만으로는 탐색 성능이 보장되지 않는다
+
+이진 트리 자체로만 놓고 볼 때는 구조적 제약만 있기 때문에 탐색 성능 보장을 의미하지는 않는다.
+
+(우리가 생각하는 시간 복잡도를 이야기 할 때 장점이 되는 경우는 이진 탐색 트리 상태를 전제로 한다.)
+
+## BST는 왼 < 부모 < 자식 관계를 유지해 탐색을 O(log n)으로 만든다
+
+이 코드가 **BST**이며 차이라면 **target으로 들어온 값과 left, right** 값을 비교하여 **왼 < 부모 < 자식** 의 관계 자체를 유지하여 탐색의 시간 복잡도를 **O(log n)**으로 한다는 것이다.
+
+```python
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+def search_bst(root, target):
+    if root is None: return False
+
+    data = root.value
+    if data < target:
+        flag = search_bst(root.right, target)
+
+    elif data > target:
+        flag = search_bst(root.left, target)
+
+    else:
+        if data == target:
+            return True
+
+    return flag
+
+# 테스트 케이스
+if __name__ == "__main__":
+    # BST 생성:
+    #       5
+    #      / \
+    #     3   7
+    #    / \
+    #   2   4
+    root = TreeNode(5)
+    root.left = TreeNode(3)
+    root.right = TreeNode(7)
+    root.left.left = TreeNode(2)
+    root.left.right = TreeNode(4)
+
+    print("=== 이진 검색 트리 ===")
+    print("트리 구조: 5를 루트로 하는 BST")
+
+    test_values = [2, 4, 5, 6, 7]
+    for val in test_values:
+        result = search_bst(root, val)
+        print(f"값 {val} 검색: {result}")
+```
+
+## 균형이 무너지면 O(log n)이 아니라 O(n)이 된다
+
+하지만 **RB트리** 혹은 **AVL트리**가 아닌 이상 최악의 경우 한쪽으로 데이터가 몰리게 되며 **시간 복잡도 O(log n)**이 아닌 **O(n)**이 되게 된다.
+
+이렇게 한쪽 균형이 무너질 경우 성능이 무너진다.
+
+## 캐시 지역성 때문에 DB는 이진 트리 대신 B+트리를 사용한다
+
+이진 트리의 노드들은 메모리 여기 저기 흩어져있다.
+
+이러한 구조상 캐시의 지역성이 좋지 않다. 그렇기 때문에 실제 O(log n)이어도 배열 기반 구조보다 속도가 느릴 수 있다. 이러한 이유 때문에 DB에서 이진 트리 대신 B+트리를 사용한다.
