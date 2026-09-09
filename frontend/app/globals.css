@@ -1228,10 +1228,28 @@ a:focus-visible {
   margin-bottom: 5px;
 }
 .toc a {
+  display: inline-block;
   overflow-wrap: anywhere;
+  transform: scale(calc(1 + var(--toc-proximity, 0) * 0.12));
+  transform-origin: left center;
+  font-weight: calc(400 + var(--toc-proximity, 0) * 250);
+  color: color-mix(
+    in srgb,
+    var(--text) calc(var(--toc-proximity, 0) * 100%),
+    var(--muted)
+  );
+  transition:
+    transform 200ms ease-out,
+    font-weight 200ms ease-out,
+    color 200ms ease-out;
 }
 .toc a:hover {
   color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .toc a {
+    transition-duration: 0ms !important;
+  }
 }
 .article-tags {
   display: flex;

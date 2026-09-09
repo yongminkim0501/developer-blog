@@ -9,6 +9,7 @@ import CodeBlock from "./code-block";
 import ViewCount from "./view-count";
 import ProjectStory from "./project-story";
 import { PostGrid } from "./post-card";
+import Toc from "./toc";
 export default function Article({
   post,
   related,
@@ -129,20 +130,7 @@ export default function Article({
             </p>
           )}
         </article>
-        {toc.length > 0 && (
-          <aside className="toc" aria-label="목차">
-            <span>ON THIS PAGE</span>
-            {toc.map((heading) => (
-              <a
-                style={{ paddingLeft: heading.level === 3 ? 12 : 0 }}
-                href={`#${heading.id}`}
-                key={heading.id}
-              >
-                {heading.text}
-              </a>
-            ))}
-          </aside>
-        )}
+        {toc.length > 0 && <Toc headings={toc} />}
       </div>
       <nav className="post-pagination" aria-label="이전 다음 글">
         {previous ? (
