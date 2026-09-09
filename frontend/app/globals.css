@@ -425,6 +425,10 @@ a:focus-visible {
   background: var(--bg);
   font-size: 13px;
   font-weight: 550;
+  transition: background-color 160ms ease-out;
+}
+.pill-link:hover {
+  background: var(--line);
 }
 .jungle-art {
   height: 410px;
