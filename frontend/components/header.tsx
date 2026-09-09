@@ -64,7 +64,7 @@ export default function Header() {
   }, [query, open, search]);
   return (
     <>
-      <header className="site-header">
+      <header className="site-header" data-home={pathname === "/" || undefined}>
         <div className="shell header-inner">
           <Link className="wordmark" href="/" aria-label="DEV.LOG 홈">
             dev<span className="logo-dot">.</span>log

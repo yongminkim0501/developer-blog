@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import type { PointerEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { A11y, EffectFade, Navigation, Pagination } from "swiper/modules";
+import {
+  A11y,
+  Autoplay,
+  EffectFade,
+  Navigation,
+  Pagination,
+} from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/navigation";
@@ -11,8 +18,41 @@ import "swiper/css/pagination";
 import styles from "./home-hero.module.css";
 
 export default function HomeHero() {
+  function followPointer(event: PointerEvent<HTMLElement>) {
+    if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+    const bullets = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        ".swiper-pagination-bullet",
+      ),
+    );
+    // Measure fixed hit areas so the animated dots cannot shift their own targets.
+    const sizes = bullets.map((bullet) => {
+      const rect = bullet.getBoundingClientRect();
+      const distance = Math.hypot(
+        event.clientX - (rect.left + rect.width / 2),
+        event.clientY - (rect.top + rect.height / 2),
+      );
+      const proximity = Math.max(0, 1 - distance / 90);
+      return 12 + 8 * proximity * proximity;
+    });
+    bullets.forEach((bullet, index) => {
+      bullet.style.setProperty("--indicator-size", `${sizes[index]}px`);
+    });
+  }
+
+  function resetIndicators(event: PointerEvent<HTMLElement>) {
+    event.currentTarget
+      .querySelectorAll<HTMLElement>(".swiper-pagination-bullet")
+      .forEach((bullet) => bullet.style.removeProperty("--indicator-size"));
+  }
+
   return (
-    <section aria-label="개발자 소개, 정글 이야기와 기술 블로그 정리">
+    <section
+      aria-label="개발자 소개, 정글 이야기와 기술 블로그 정리"
+      onPointerMove={followPointer}
+      onPointerLeave={resetIndicators}
+      onPointerCancel={resetIndicators}
+    >
       <Swiper
         spaceBetween={30}
         effect="fade"
@@ -20,7 +60,12 @@ export default function HomeHero() {
         rewind
         navigation
         pagination={{ clickable: true }}
-        modules={[EffectFade, Navigation, Pagination, A11y]}
+        autoplay={{
+          delay: 5000,
+          pauseOnMouseEnter: true,
+          disableOnInteraction: false,
+        }}
+        modules={[EffectFade, Navigation, Pagination, A11y, Autoplay]}
         a11y={{
           prevSlideMessage: "이전 슬라이드",
           nextSlideMessage: "다음 슬라이드",
@@ -29,7 +74,7 @@ export default function HomeHero() {
         }}
         className={styles.slider}
       >
-        <SwiperSlide>
+        <SwiperSlide className={styles.introSlide}>
           <div className="shell home-intro">
             <div className="intro-topline">
               <span className="eyebrow">

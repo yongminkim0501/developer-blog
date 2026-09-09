@@ -1,13 +1,29 @@
 .slider {
   --swiper-theme-color: var(--accent);
   --swiper-navigation-size: 16px;
-  --swiper-pagination-bottom: 29px;
-  border-bottom: 1px solid var(--line);
+  --swiper-pagination-bottom: 28px;
+  --swiper-pagination-bullet-horizontal-gap: 0px;
 }
 
 .slider :global(.swiper-slide) {
   height: auto;
   background: var(--bg);
+}
+
+.slider .introSlide {
+  background:
+    radial-gradient(
+      circle at 15% 85%,
+      rgba(65, 105, 225, 0.08) 0%,
+      rgba(65, 105, 225, 0.03) 30%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(255, 160, 90, 0.05) 0%,
+      transparent 45%
+    ),
+    var(--bg);
 }
 
 .slider :global(.home-intro),
@@ -56,14 +72,51 @@
   right: max(98px, calc((100% - 1240px) / 2 + 50px));
 }
 
-.slider :global(.swiper-pagination-bullet) {
-  width: 24px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--muted);
+.slider :global(.swiper-pagination) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.slider :global(.swiper-pagination-bullet-active) {
+.slider :global(.swiper-pagination-bullet) {
+  position: relative;
+  width: 30px;
+  height: 20px;
+  border-radius: 999px;
+  background: transparent;
+  opacity: 1;
+}
+
+.slider :global(.swiper-pagination-bullet)::before {
+  content: "";
+  position: absolute;
+  inset: -9px 0;
+}
+
+.slider :global(.swiper-pagination-bullet)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--indicator-size, 12px);
+  height: var(--indicator-size, 12px);
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--muted) 25%, var(--bg));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition:
+    width 160ms ease-out,
+    height 160ms ease-out,
+    background-color 300ms ease-out;
+}
+
+.slider :global(.swiper-pagination-bullet):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.slider :global(.swiper-pagination-bullet-active)::after {
   background: var(--accent);
 }
 
@@ -189,7 +242,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   .slider :global(.swiper-wrapper),
-  .slider :global(.swiper-slide) {
+  .slider :global(.swiper-slide),
+  .slider :global(.swiper-pagination-bullet)::after {
     transition-duration: 0ms !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .slider :global(.swiper-pagination) {
+    justify-content: flex-start;
+    padding-left: 20px;
   }
 }

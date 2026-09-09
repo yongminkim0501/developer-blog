@@ -89,6 +89,26 @@ test("home hero navigation, pagination and links", async ({ page }) => {
   });
   await expect(hero.locator(".swiper-initialized")).toBeVisible();
   await expect(hero.locator(".swiper-pagination-bullet")).toHaveCount(3);
+  const bullets = hero.locator(".swiper-pagination-bullet");
+  const barWidth = (index: number) =>
+    bullets
+      .nth(index)
+      .evaluate((bullet) =>
+        Number.parseFloat(getComputedStyle(bullet, "::after").width),
+      );
+  await bullets.nth(2).hover();
+  await expect.poll(() => barWidth(2)).toBeGreaterThan(18);
+  await expect.poll(() => barWidth(0)).toBeLessThan(13);
+  await expect(bullets.nth(0)).toHaveClass(/swiper-pagination-bullet-active/);
+  await bullets.nth(1).hover();
+  await expect.poll(() => barWidth(1)).toBeGreaterThan(18);
+  await expect.poll(() => barWidth(2)).toBeLessThan(15);
+  await expect.poll(() => barWidth(2)).toBeGreaterThan(12);
+  await expect(bullets.nth(0)).toHaveClass(/swiper-pagination-bullet-active/);
+  await page.mouse.move(0, 0);
+  for (const index of [0, 1, 2]) {
+    await expect.poll(() => barWidth(index)).toBe(12);
+  }
   const expectSlide = async (index: number) => {
     await expect(hero.locator(".swiper-slide").nth(index)).toHaveClass(
       /swiper-slide-active/,
@@ -180,6 +200,32 @@ test("home hero navigation, pagination and links", async ({ page }) => {
     await expect(page).toHaveURL(/\/blog\/.+/);
     await expect(page.locator(".article-header h1")).toBeVisible();
   }
+});
+
+test("home hero autoplay pauses on hover and resumes through all slides", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const hero = page.getByRole("region", {
+    name: "개발자 소개, 정글 이야기와 기술 블로그 정리",
+  });
+  await expect(hero.locator(".swiper-initialized")).toBeVisible();
+  await page.mouse.move(0, 0);
+  const slides = hero.locator(".swiper-slide");
+  await expect(slides.nth(1)).toHaveClass(/swiper-slide-active/, {
+    timeout: 7000,
+  });
+  await hero.hover();
+  // Wait longer than one autoplay interval to verify hover actually pauses it.
+  await page.waitForTimeout(5500);
+  await expect(slides.nth(1)).toHaveClass(/swiper-slide-active/);
+  await page.mouse.move(0, 0);
+  await expect(slides.nth(2)).toHaveClass(/swiper-slide-active/, {
+    timeout: 7000,
+  });
+  await expect(slides.nth(0)).toHaveClass(/swiper-slide-active/, {
+    timeout: 7000,
+  });
 });
 
 test("article full-width layout on desktop and mobile", async ({ page }) => {
