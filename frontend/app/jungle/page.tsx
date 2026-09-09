@@ -25,7 +25,6 @@ export default function Page() {
               <span className="week-number">
                 WEEK {String(w).padStart(2, "0")}
               </span>
-              {all.find((p) => p.week === w)?.series}
             </h2>
             <Link href={`/jungle/${w}`}>주차별 기록 ↗</Link>
           </div>
