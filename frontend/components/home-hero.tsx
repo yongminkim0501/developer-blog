@@ -48,6 +48,7 @@ export default function HomeHero() {
 
   return (
     <section
+      className={styles.hero}
       aria-label="개발자 소개, 정글 이야기와 기술 블로그 정리"
       onPointerMove={followPointer}
       onPointerLeave={resetIndicators}

@@ -11,7 +11,7 @@ import {
 export default function Home() {
   const all = posts();
   return (
-    <main>
+    <main className="home-page">
       <HomeHero />
       <section className="shell section recent-section">
         <div className="section-heading">

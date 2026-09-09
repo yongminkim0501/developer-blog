@@ -1,3 +1,45 @@
+.hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: max(0px, calc((100% - 1240px) / 2));
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hero::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 1) 30%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.hero::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 1) 30%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* The shell starts shrinking below 1240px + 96px of horizontal spacing. */
+@media (max-width: 1336px) {
+  .hero::before,
+  .hero::after {
+    display: none;
+  }
+}
+
 .slider {
   --swiper-theme-color: var(--accent);
   --swiper-navigation-size: 16px;

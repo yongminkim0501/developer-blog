@@ -386,6 +386,10 @@ a:focus-visible {
   padding-top: 110px;
   padding-bottom: 40px;
 }
+.home-page > .section {
+  padding-top: 100px;
+  padding-bottom: 0;
+}
 .jungle-feature {
   background: #f0f4ed;
   overflow: hidden;
