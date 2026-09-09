@@ -63,13 +63,11 @@
   z-index: 11;
   transition:
     background-color 160ms ease-out,
-    border-color 160ms ease-out,
     color 160ms ease-out;
 }
 
 .slider :global(.swiper-button-prev):hover,
 .slider :global(.swiper-button-next):hover {
-  border-color: var(--muted);
   background: var(--line);
   color: var(--text);
 }
