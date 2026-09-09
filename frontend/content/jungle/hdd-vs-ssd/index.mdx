@@ -1,0 +1,155 @@
+---
+title: "3주차 - HDD는 왜 느리고 SSD는 왜 빠를까"
+description: "HDD는 기계적으로, SSD는 반도체로 동작한다는 차이에서 출발해서 Platter/Track/Sector 구조와 NAND Page/Block 구조, Wear Leveling까지 정리."
+category: "Operating System"
+date: "2026-09-09"
+tags: ["hdd", "ssd", "저장장치", "nand"]
+project: "krafton-jungle"
+week: 3
+status: "published"
+thumbnail: "./thumbnail.png"
+---
+
+## HDD는 기계적으로 움직이고 SSD는 반도체로 동작
+
+HDD와 SSD는 모두 보조 기억 장치로 전원이 꺼져도 데이터를 계속 보관하는 저장장치.
+HDD는 기계적으로 움직이고 SSD는 반도체로 동작.
+
+- HDD: Platter + Head 구조, 랜덤 접근이 느림
+- SSD: NAND + Controller 구조, 랜덤 접근이 빠름
+
+## HDD는 왜 랜덤 접근이 느린가
+
+HDD 에서는 랜덤 접근이 느리다는 특징이 생김.
+
+### 표면에 0과 1을 저장하는 Platter, Track, Sector
+
+> HDD 구성 요소
+
+```
+HDD
+┌─────────────────────────┐
+│        Platter          │  ← 자기 디스크 원판
+│      ↻ ↻ ↻ ↻ ↻          │
+│                         │
+│        ↑                │
+│   Read/Write Head       │  ← 읽기/쓰기 헤드
+│        │                │
+│   Actuator Arm          │  ← 헤드를 움직이는 팔
+│                         │
+│      Spindle Motor      │  ← 원판 회전
+└─────────────────────────┘
+```
+
+```
+Platter
+        ┌───────────────┐
+        │  ○ ○ ○ ○ ○    │
+        │ ○ ○ ○ ○ ○ ○   │
+        │○ ○ ○ ○ ○ ○ ○  │
+        └───────────────┘
+```
+
+여기서의 동심원을 Track, Track을 잘게 나눈 단위가 Sector
+
+```
+Track
+ ──────────────
+Sector
+[ ][ ][ ][ ][ ]
+```
+
+표면에 0과 1을 저장
+
+### 읽는 과정: Track 이동 → Sector 회전 대기 → 읽기
+
+HDD가 원하는 데이터를 읽기 위해선
+
+1. 원하는 Track으로 헤드 이동
+2. 원하는 Sector가 헤드 아래로 회전해 올 때까지 기다림
+3. 데이터 읽음
+
+이러한 물리적인 이동과 기다림이 계속되기 때문에 랜덤 접근 자체가 느린 속도의 원인이 됨
+
+## SSD에는 회전판이나 헤드가 없음
+
+NAND Flash Chip 안의 cell이 전자의 상태를 저장해서 데이터를 표현함
+
+> SSD 구성 요소
+
+```
+SSD
+┌────────────────────────────┐
+│ Controller                 │
+│                            │
+│ NAND Flash Chip            │
+│ ┌────┐ ┌────┐ ┌────┐      │
+│ │    │ │    │ │    │      │
+│ └────┘ └────┘ └────┘      │
+│                            │
+│ DRAM Cache (있는 경우)      │
+└────────────────────────────┘
+```
+
+→ 회전판이나 헤드가 없음
+
+### 읽기/쓰기는 Page 단위, 삭제는 Block 단위
+
+구조적으론
+
+```
+SSD
+Cell
+ ↓
+Page
+ ↓
+Block
+ ↓
+NAND Chip
+```
+
+데이터 읽기 / 쓰기는 페이지 단위, 삭제는 Block 단위
+
+```
+Block
+┌──────┐
+│Page 1│
+├──────┤
+│Page 2│
+├──────┤
+│Page 3│
+├──────┤
+│Page 4│
+└──────┘
+```
+
+Page 하나만 수정하고 싶어도 상황에 따라 Block 단위의 지우기 작업이 필요할 수 있음
+
+### SSD 컨트롤러가 하는 일
+
+```
+SSD Controller
+- 주소 변환
+- Wear Leveling
+- Garbage Collection
+- 오류 수정
+- 캐싱
+```
+
+### 왜 Wear Leveling이 중요한가
+
+NAND Flash 셀은 쓰기/삭제 횟수가 무한하지 않기 때문에 특정 셀만 계속 쓰면 빨리 닳음
+
+- SSD 컨트롤러가 쓰기를 여러 셀에 분산
+
+## 표로 정리한 HDD와 SSD의 차이
+
+| **특징** | **HDD** | **SSD** |
+| --- | --- | --- |
+| 저장 방식 | 자기 디스크 | NAND Flash |
+| 움직이는 부품 | 있음 | 없음 |
+| 랜덤 접근 | 느림 | 빠름 |
+| 소음 | 있음 | 거의 없음 |
+| 충격 | 상대적으로 약함 | 상대적으로 강함 |
+| 가격/용량 | 저렴한 편 | 비싼 편 |
+| 구조 | Platter + Head | NAND + Controller |
