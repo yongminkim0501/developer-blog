@@ -6,10 +6,6 @@ type Heading = { id: string; text: string; level: number };
 export default function Toc({ headings }: { headings: Heading[] }) {
   function followPointer(event: PointerEvent<HTMLElement>) {
     if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-    // Scale the falloff to the list's own height so every item shifts a
-    // little, not just whichever one the cursor sits on.
-    const listHeight = event.currentTarget.getBoundingClientRect().height;
-    const falloff = Math.max(160, listHeight);
     event.currentTarget
       .querySelectorAll<HTMLElement>("a")
       .forEach((link) => {
@@ -17,7 +13,7 @@ export default function Toc({ headings }: { headings: Heading[] }) {
         const distance = Math.abs(
           event.clientY - (rect.top + rect.height / 2),
         );
-        const proximity = Math.max(0, 1 - distance / falloff);
+        const proximity = Math.max(0, 1 - distance / 70);
         link.style.setProperty("--toc-proximity", String(proximity));
       });
   }
