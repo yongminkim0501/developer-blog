@@ -12,7 +12,7 @@ import styles from "./home-hero.module.css";
 
 export default function HomeHero() {
   return (
-    <section aria-label="개발자 소개와 정글 이야기">
+    <section aria-label="개발자 소개, 정글 이야기와 기술 블로그 정리">
       <Swiper
         spaceBetween={30}
         effect="fade"
@@ -93,6 +93,40 @@ export default function HomeHero() {
                   37° 16′ N &nbsp; 127° 02′ E
                 </span>
                 <span className="jungle-star">✳</span>
+              </div>
+            </div>
+          </div>
+        </SwiperSlide>
+        <SwiperSlide>
+          <div className={styles.techFeature}>
+            <div className={`shell ${styles.techInner}`}>
+              <div>
+                <span className="eyebrow">TECH BLOG NOTES</span>
+                <h2>
+                  읽고, 이해하고,
+                  <br />
+                  기술 블로그 정리.
+                </h2>
+                <p>
+                  다양한 서비스의 기술과 문제 해결 과정.
+                  <br />
+                  기술 블로그를 읽고 배운 내용을 모았습니다.
+                </p>
+                <Link className="pill-link" href="/tech-blog">
+                  기술 블로그 정리 살펴보기 <ArrowUpRight size={18} />
+                </Link>
+              </div>
+              <div className={styles.techArt} aria-hidden="true">
+                <span className={styles.techArtLabel}>
+                  READ.
+                  <br />
+                  THINK.
+                  <br />
+                  <em>RECORD.</em>
+                </span>
+                <span className={styles.techArtCaption}>
+                  IDEAS WORTH KEEPING
+                </span>
               </div>
             </div>
           </div>

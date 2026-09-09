@@ -84,8 +84,26 @@ test("keyboard search, empty state, result navigation and dismissal", async ({
 
 test("home hero navigation, pagination and links", async ({ page }) => {
   await page.goto("/");
-  const hero = page.getByRole("region", { name: "개발자 소개와 정글 이야기" });
+  const hero = page.getByRole("region", {
+    name: "개발자 소개, 정글 이야기와 기술 블로그 정리",
+  });
   await expect(hero.locator(".swiper-initialized")).toBeVisible();
+  await expect(hero.locator(".swiper-pagination-bullet")).toHaveCount(3);
+  const expectSlide = async (index: number) => {
+    await expect(hero.locator(".swiper-slide").nth(index)).toHaveClass(
+      /swiper-slide-active/,
+    );
+    await expect(hero.locator(".swiper-slide").nth(index)).toHaveCSS(
+      "opacity",
+      "1",
+    );
+    for (const other of [0, 1, 2].filter((slide) => slide !== index)) {
+      await expect(hero.locator(".swiper-slide").nth(other)).toHaveCSS(
+        "opacity",
+        "0",
+      );
+    }
+  };
   await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
   const height = (await hero.boundingBox())!.height;
   await hero
@@ -94,23 +112,68 @@ test("home hero navigation, pagination and links", async ({ page }) => {
   await expect(
     hero.getByRole("heading", { name: "몰입의 시간, 나의 정글 이야기." }),
   ).toBeVisible();
+  await expectSlide(1);
+  expect((await hero.boundingBox())!.height).toBeCloseTo(height, 0);
+  await hero
+    .getByRole("button", { name: "다음 슬라이드", exact: true })
+    .click();
+  await expect(
+    hero.getByRole("heading", { name: "읽고, 이해하고, 기술 블로그 정리." }),
+  ).toBeVisible();
+  await expectSlide(2);
   expect((await hero.boundingBox())!.height).toBeCloseTo(height, 0);
   await hero
     .getByRole("button", { name: "다음 슬라이드", exact: true })
     .click();
   await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  await expectSlide(0);
   await hero.getByRole("button", { name: "1번 슬라이드로 이동" }).click();
   await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
   await hero.getByRole("button", { name: "2번 슬라이드로 이동" }).click();
+  await expectSlide(1);
   await hero
     .getByRole("button", { name: "이전 슬라이드", exact: true })
     .click();
   await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await hero
-    .getByRole("button", { name: "다음 슬라이드", exact: true })
-    .click();
-  await expect(hero.getByRole("link", { name: "김용민" })).toBeVisible();
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await expect(hero.locator(".swiper-initialized")).toBeVisible();
+    await hero.getByRole("button", { name: "3번 슬라이드로 이동" }).click();
+    await expectSlide(2);
+    const reviewsLink = hero.getByRole("link", {
+      name: "기술 블로그 정리 살펴보기",
+    });
+    await expect(reviewsLink).toBeVisible();
+    await page.screenshot({
+      path: `test-results/tech-hero-${viewport.width}.png`,
+    });
+    await reviewsLink.click();
+    await expect(page).toHaveURL("/tech-blog");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "기술 블로그 정리",
+    );
+    await expect(page.locator(".post-card")).not.toHaveCount(0);
+    for (const category of await page
+      .locator(".post-category")
+      .allTextContents()) {
+      expect(category).toBe("Tech Blog Review");
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `test-results/tech-blog-${viewport.width}.png`,
+    });
+    await page.locator(".post-card h3 a").first().click();
+    await expect(page).toHaveURL(/\/blog\/.+/);
+    await expect(page.locator(".article-header h1")).toBeVisible();
+  }
 });
 
 test("article full-width layout on desktop and mobile", async ({ page }) => {
