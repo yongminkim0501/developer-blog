@@ -16,20 +16,12 @@
 
 .hero::before {
   left: 0;
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 1) 30%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(to right, var(--bg) 30%, transparent 100%);
 }
 
 .hero::after {
   right: 0;
-  background: linear-gradient(
-    to left,
-    rgba(255, 255, 255, 1) 30%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(to left, var(--bg) 30%, transparent 100%);
 }
 
 /* The shell starts shrinking below 1240px + 96px of horizontal spacing. */
