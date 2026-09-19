@@ -1054,6 +1054,11 @@ a:focus-visible {
   grid-template-columns: minmax(0, 1fr);
   justify-content: center;
 }
+.thumbnail-contain {
+  object-fit: contain;
+  padding: clamp(24px, 4vw, 56px);
+  background: #f6f7f8;
+}
 .article-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 190px;

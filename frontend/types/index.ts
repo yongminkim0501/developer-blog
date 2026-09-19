@@ -14,6 +14,7 @@ export interface Post {
   status: string;
   featured?: boolean;
   thumbnail?: string;
+  thumbnailFit?: "cover" | "contain";
   readingTime: number;
   body: string;
   tech?: string[];

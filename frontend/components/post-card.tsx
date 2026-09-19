@@ -18,7 +18,11 @@ export function PostCard({
         aria-hidden="true"
       >
         {post.thumbnail ? (
-          <img src={post.thumbnail} alt="" className="post-cover" />
+          <img
+            src={post.thumbnail}
+            alt=""
+            className={`post-cover${post.thumbnailFit === "contain" ? " thumbnail-contain" : ""}`}
+          />
         ) : (
           <div className="fallback-cover">{post.category}</div>
         )}
