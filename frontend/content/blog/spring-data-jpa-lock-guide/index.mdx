@@ -1,0 +1,268 @@
+---
+title: "Spring Data JPA @Lock 제대로 쓰기"
+description: "지갑 잔액의 갱신 손실을 예로 살펴보는 Spring Data JPA @Lock. 락 모드 선택부터 대기 정책, 예외 처리, 1차 캐시와 트랜잭션의 함정까지 정리한다."
+date: "2026-09-19"
+category: "Spring"
+tags: ["spring", "jpa", "동시성", "비관적락"]
+status: "published"
+thumbnail: "./thumbnail.png"
+---
+
+지갑 잔액처럼 **읽고 → 계산하고 → 다시 쓰는** 데이터는 동시 요청이 들어오면 갱신 손실이 생김.
+
+두 요청이 같은 잔액 1000을 읽고 각각 -300, -500을 하면, 결과는 200이 아니라 700이나 500이 될 수 있음.
+
+이걸 막는 방법 중 하나가 락이고, Spring Data JPA에서는 `@Lock`으로 지정할 수 있음.
+
+이 글에서는 `@Lock`이 실제로 뭘 하는지부터 시작해서, 어떤 락을 골라야 하는지, 어디에 붙이는지, 그리고 붙였는데도 기대대로 동작하지 않는 함정까지 순서대로 정리함.
+
+## @Lock이란
+
+`org.springframework.data.jpa.repository.Lock`은 Spring Data JPA 애노테이션.
+
+쿼리 메서드가 실행될 때 만들어지는 `JPA Query` 객체에 `query.setLockMode(...)`를 대신 호출하는 식으로 락 모드를 전달함. `findById`처럼 `EntityManager.find`를 사용하는 CRUD 메서드는 해당 조회 경로에 락 모드가 전달됨.
+
+```java
+// @Lock 없이 직접 쓰면 이런 코드
+em.createQuery("select w from Wallet w where w.userId = :id", Wallet.class)
+  .setParameter("id", userId)
+  .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+  .getSingleResult();
+```
+
+즉 **애노테이션 자체가 DB 락을 거는 것은 아님**.
+
+비관적 락이라면 `Hibernate`가 `lock mode`와 DB 방언을 보고 `FOR UPDATE` 같은 잠금 SQL을 생성하고, 그 SQL이 DB에서 실행될 때 DB 엔진이 락을 검. 실제 SQL과 추가 조회 여부는 DB·Hibernate 버전과 쿼리 형태에 따라 달라질 수 있음.
+
+그러니까 `@Lock`에서 실제로 고르는 건 어떤 `lock mode`를 넘길지이고, 그 전에 락에는 크게 두 가지 접근이 있다는 걸 먼저 짚고 가야 함.
+
+## 비관적 락과 낙관적 락 차이
+
+| | 낙관적 락 (Optimistic Lock) | 비관적 락 (Pessimistic Lock) |
+| --- | --- | --- |
+| 생각 | 충돌이 별로 안 나겠지 | 충돌이 날 수 있으니 먼저 잠그자 |
+| 방식 | 수정 후 반영할 때 버전 등으로 충돌 검사 | 데이터를 읽을 때 잠금 획득 |
+| 다른 트랜잭션 | 동시에 읽고 수정 시도 가능. 실제 UPDATE에는 DB 락이 걸릴 수 있음 | 충돌하는 쓰기나 잠금 요청은 대기. 일반 읽기의 동작은 DB·격리 수준에 따라 다름 |
+| 장점 | 충돌이 드물면 잠금 대기를 줄일 수 있음 | 같은 데이터의 변경 작업을 직렬화하기 쉬움 |
+| 단점 | 충돌하면 재시도 필요 | 대기, 데드락 가능 |
+| 적합 | 충돌이 드문 경우 | 충돌이 자주 발생하는 경우 |
+
+`LockModeType` 값들도 이 두 계열로 나뉨.
+
+## LockModeType 값별 의미
+
+```java
+public enum LockModeType {
+    READ, WRITE,                     // JPA 1.0 레거시 별칭
+    OPTIMISTIC,                      // = READ
+    OPTIMISTIC_FORCE_INCREMENT,      // = WRITE
+    PESSIMISTIC_READ,
+    PESSIMISTIC_WRITE,
+    PESSIMISTIC_FORCE_INCREMENT,
+    NONE
+}
+```
+
+### 낙관적 계열: 버전으로 충돌을 잡음
+
+이 글에서는 `@Version` 필드가 있는 엔티티를 전제로 함. JPA는 버전 없는 엔티티의 낙관적 락 지원을 의무화하지 않으며, 지원하지 않으면 `PersistenceException`이 발생함. 조용히 무시될 것으로 기대하면 안 됨. [Jakarta Persistence LockModeType](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/lockmodetype)
+
+| 값 | 동작 |
+| --- | --- |
+| `OPTIMISTIC` | 트랜잭션 동안 버전 충돌을 검사. 검사 시점과 SQL은 구현에 따라 다르며, 변경 시 버전 조건이 붙은 UPDATE나 별도 버전 조회가 사용될 수 있음 |
+| `OPTIMISTIC_FORCE_INCREMENT` | 엔티티를 수정하지 않았어도 버전을 강제로 증가. 자식 변경 시 부모 버전을 올리는 용도 등 |
+
+`@Version`이 있으면 일반적인 엔티티 수정에도 낙관적 버전 검사가 적용되므로, 모든 수정 메서드에 `@Lock(OPTIMISTIC)`을 붙여야 하는 것은 아님.
+
+### 비관적 계열: DB 잠금을 사용함
+
+아래는 MySQL 8.x와 PostgreSQL에서 사용하는 대표적인 잠금 구문. 실제 Hibernate 생성 SQL은 사용하는 버전과 방언을 확인해야 함.
+
+| 값 | MySQL(InnoDB) | PostgreSQL |
+| --- | --- | --- |
+| `PESSIMISTIC_READ` | `FOR SHARE` 또는 `LOCK IN SHARE MODE` | `FOR SHARE` |
+| `PESSIMISTIC_WRITE` | `FOR UPDATE` | `FOR UPDATE` 또는 `FOR NO KEY UPDATE` 등 |
+| `PESSIMISTIC_FORCE_INCREMENT` | 배타 잠금 + 버전 증가 | 배타 잠금 + 버전 증가 |
+
+`PESSIMISTIC_FORCE_INCREMENT`는 여기서도 `@Version` 필드가 있는 엔티티를 전제로 함.
+
+## 지갑의 read-modify-write에는 PESSIMISTIC_WRITE
+
+같은 지갑 행에 요청이 몰리고 충돌 시 재시도 비용도 크다면 비관적 락을 고려할 수 있음. 여기서는 잔액을 읽고 계산한 뒤 다시 쓰는 방식을 전제로 `PESSIMISTIC_WRITE`를 선택함.
+
+그런데 비관적 계열 안에서도 `READ`와 `WRITE`를 헷갈리기 쉬움.
+
+`PESSIMISTIC_READ`는 보통 공유 락으로 구현되어 다른 공유 락과 공존하지만 쓰기와 충돌함. DB에 따라 더 강한 락으로 대체될 수도 있음.
+
+공유 락을 사용하는 경우 `read-modify-write` 패턴에 붙이면 **락 승격 과정에서 데드락이 생길 수 있음**.
+
+- 두 트랜잭션이 동시에 공유 락을 잡음
+- 둘 다 UPDATE를 시도하면 서로의 공유 락이 풀리길 기다리게 됨
+- DB가 데드락을 감지해 한쪽을 중단할 수 있음
+
+따라서 이 패턴에서는 처음 읽는 순간부터 배타 락을 요청하는 `PESSIMISTIC_WRITE`가 적합함. 공유 락으로 읽은 뒤 수정하는 방식의 위험은 [MySQL 잠금 읽기 문서](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html)에서도 설명함.
+
+어떤 락을 쓸지 정했으니, 이제 리포지토리 어디에 붙이는지 봄.
+
+## 어디에 붙일 수 있나
+
+### 파생 쿼리 메서드
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+Optional<Wallet> findByUserId(Long userId);
+```
+
+### @Query 메서드
+
+둘을 같이 쓰면 됨.
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("select w from Wallet w where w.userId = :userId")
+Optional<Wallet> findByUserIdForUpdate(@Param("userId") Long userId);
+```
+
+`ForUpdate`라는 이름만 붙인다고 락이 걸리는 것은 아님. 위처럼 `@Query`와 `@Lock`으로 의도를 명시함.
+
+### 상속받은 findById 재선언
+
+- `CrudRepository.findById`는 기본적으로 명시적 락 모드를 지정하지 않음
+- 락을 걸고 싶으면 인터페이스에서 다시 선언하며 애노테이션을 붙임
+
+```java
+@Override
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+Optional<Wallet> findById(Long id);
+```
+
+단 이렇게 하면 **그 리포지토리의 모든 `findById` 호출이 락을 요청함**.
+
+같은 행을 대상으로 하는 단순 조회까지 잠금 경합에 참여하므로, 락 버전은 `findByIdForUpdate` 같은 별도 이름의 `@Query` 메서드로 두고 일반 조회와 분리하는 편이 나음. 쿼리 메서드와 CRUD 메서드 재선언에 대한 사용법은 [Spring Data JPA Locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html)에서 확인할 수 있음.
+
+### 네이티브 쿼리에는 SQL로 직접 작성
+
+`nativeQuery = true`인 `@Query`에 JPA의 `@Lock`을 붙이는 방식은 지원되지 않으며, 무시되는 대신 예외가 발생할 수 있음. JPA `Query.setLockMode`는 JPQL SELECT 또는 Criteria 조회가 아니면 `IllegalStateException`을 명시함. [Jakarta Persistence Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query#setLockMode(jakarta.persistence.LockModeType))
+
+네이티브 쿼리는 `@Lock`을 제거하고 SQL에 직접 `FOR UPDATE`를 작성하는 편이 명확함.
+
+락을 붙이고 나면 다음 고민은 이미 누가 잡고 있으면 얼마나 기다릴 것인가임.
+
+## @QueryHints로 대기 정책 제어
+
+별도 정책이 없으면 락이 풀릴 때까지 기다리는 경로를 사용하므로, 앞 트랜잭션이 오래 걸리면 뒤 요청이 줄줄이 묶일 수 있음. 다만 실제 대기 상한은 DB의 락 타임아웃이나 트랜잭션·문장 타임아웃 설정에도 영향을 받음.
+
+대기 정책은 `@QueryHints`로 요청할 수 있음.
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
+@Query("select w from Wallet w where w.userId = :userId")
+Optional<Wallet> findByUserIdForUpdate(@Param("userId") Long userId);
+```
+
+`Hibernate`에서는 다음과 같은 의미를 사용함. 음수 값은 Hibernate 확장이고, 실제 SQL 변환은 DB 방언의 지원 여부에 따라 달라짐.
+
+| 값 | 의미 | 대표적인 SQL/동작 |
+| --- | --- | --- |
+| `0` | 대기하지 않고 실패 | `FOR UPDATE NOWAIT` |
+| `-2` | 잠긴 행 건너뛰기 | `FOR UPDATE SKIP LOCKED` |
+| `-1` | Hibernate 차원에서 별도 대기 제한을 두지 않음 | 일반 `FOR UPDATE`, DB 설정은 적용됨 |
+| 양수 | n밀리초 대기 요청 | DB·방언·드라이버별 상이, 무시될 수 있음 |
+
+지원하지 않는 환경에서는 힌트가 무시될 수 있으므로 값만 설정하고 적용됐다고 판단하면 안 됨. [Hibernate 6.6 잠금 문서](https://docs.hibernate.org/orm/6.6/userguide/html_single/#locking)
+
+### MySQL과 PostgreSQL에서 주의할 점
+
+MySQL 8.x는 `NOWAIT`와 `SKIP LOCKED`를 지원하지만, `FOR UPDATE`에 양수 밀리초 타임아웃을 붙이는 구문은 없음. 따라서 위 예시의 `3000`만으로 3초 대기를 보장할 수 없고, InnoDB의 `innodb_lock_wait_timeout` 같은 DB 설정을 별도로 확인해야 함.
+
+PostgreSQL도 JPA 힌트의 양수가 자동으로 `lock_timeout` 세션 파라미터에 반영된다고 가정하면 안 됨. 예를 들어 [Hibernate 6.6 PostgreSQLDialect 구현](https://github.com/hibernate/hibernate-orm/blob/6.6/hibernate-core/src/main/java/org/hibernate/dialect/PostgreSQLDialect.java)은 `NOWAIT`와 `SKIP LOCKED`를 구분하지만, 일반적인 양수 값에는 잠금 SQL만 반환함.
+
+PostgreSQL에서 트랜잭션 내 잠금 대기를 3초로 제한하려면 같은 트랜잭션·연결에서 다음처럼 DB 설정을 명시할 수 있음.
+
+```sql
+SET LOCAL lock_timeout = '3s';
+```
+
+`lock_timeout`은 락을 기다리는 시간을 제한하는 설정이며, 기본값 `0`은 해당 제한을 끈다는 의미. JPA 힌트의 `0`과 의미가 다르다는 점도 주의해야 함. [PostgreSQL lock_timeout](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-LOCK-TIMEOUT)
+
+`SKIP LOCKED`는 특정 지갑의 잔액을 처리하는 조회에는 적합하지 않음. 잠긴 지갑이 결과에서 빠져 없는 행처럼 보일 수 있기 때문. 반면 DB 기반 작업 큐에서 워커들이 서로 다른 작업을 집어가게 할 때는 유용함.
+
+타임아웃을 두면 결국 락을 못 잡는 상황이 생기므로, 그때 어떤 예외가 올라오는지도 알아둬야 함.
+
+## 발생하는 예외
+
+Spring이 JPA 예외를 자기 계층으로 번역함. 아래는 대표적인 예외이며, 구체적인 클래스는 DB·드라이버·Hibernate 버전과 실패 시점에 따라 달라질 수 있음.
+
+| 상황 | Spring 예외 예시 |
+| --- | --- |
+| 락 획득 실패/타임아웃 | `PessimisticLockingFailureException`, `CannotAcquireLockException` 등 |
+| 데드락 감지 | `CannotAcquireLockException` 등 비관적 잠금 실패 계열. DB가 한쪽 트랜잭션을 중단할 수 있음 |
+| 버전 충돌 | `ObjectOptimisticLockingFailureException` 등 |
+
+비관적 락을 쓰더라도 여러 행을 다른 순서로 잠그면 데드락은 여전히 가능함. 무조건 500을 내보내기보다 실패 응답과 제한된 재시도 정책을 정해두는 게 좋음. 재시도는 실패한 트랜잭션을 재사용하지 말고 새 트랜잭션에서 작업 전체를 수행해야 하며, 중복 실행에 대한 처리도 필요함.
+
+여기까지가 `@Lock`을 제대로 붙이는 법이고, 이제부터는 붙였는데도 기대대로 동작하지 않는 경우들임.
+
+## 핵심 함정: 락 획득과 1차 캐시 갱신은 별개
+
+같은 트랜잭션에서 해당 엔티티를 이미 락 없이 읽어 영속성 컨텍스트에 올려뒀다면 문제가 생길 수 있음.
+
+다음 예제는 일반 조회 `findByUserId`에는 `@Lock`이 없고, `findByUserIdForUpdate`에만 `PESSIMISTIC_WRITE`를 지정했다고 가정함.
+
+```java
+@Transactional
+public void bad(Long userId) {
+    Wallet w1 = repo.findByUserId(userId).orElseThrow();
+    Wallet w2 = repo.findByUserIdForUpdate(userId).orElseThrow();
+    // 락을 획득해도 w2의 필드가 최신 DB 값으로 갱신됐다고 가정하면 안 됨
+}
+```
+
+JPQL 잠금 쿼리가 DB로 나가더라도, 이미 영속성 컨텍스트에 있는 엔티티의 필드가 조회 결과로 자동 덮어쓰기되는 것은 아님.
+
+즉 **락은 잡았는데 손에 든 잔액은 락 걸기 전에 읽은 값일 수 있음**. 버전 검사 같은 별도 보호가 없다면, 그 사이 다른 트랜잭션이 바꾼 잔액을 오래된 값으로 덮어쓸 위험이 있음.
+
+`findById`처럼 `em.find` 경로를 타는 경우도 버전 검사나 잠금 획득과 상태 갱신을 같은 동작으로 가정하면 안 됨.
+
+가장 단순한 방법은 **새 트랜잭션의 영속성 컨텍스트에 오래된 엔티티가 없는 상태에서, 락 조회를 첫 접근으로** 두는 것.
+
+이미 엔티티를 읽었다면 잠금 획득과 최신 상태 갱신을 구분해야 함.
+
+```java
+// 잠금 획득 또는 승격. 최신 필드 값으로 갱신하는 작업은 아님
+entityManager.lock(wallet, LockModeType.PESSIMISTIC_WRITE);
+
+// DB에서 상태를 다시 읽으면서 잠금 획득
+entityManager.refresh(wallet, LockModeType.PESSIMISTIC_WRITE);
+```
+
+read-modify-write에 필요한 최신 상태를 읽으려면 보통 `refresh` 쪽이 맞음. 단 `refresh`는 아직 반영하지 않은 변경을 덮어쓸 수 있으므로 잔액 계산·수정 전에 호출해야 하며, 격리 수준에 따른 충돌 예외도 고려해야 함.
+
+## 나머지 전제 조건
+
+1차 캐시 말고도 `@Lock`이 제대로 동작하려면 깔려 있어야 하는 조건들이 있음.
+
+- **조회부터 수정까지 하나의 트랜잭션으로 묶기**
+  - 활성 트랜잭션 없이 잠금 조회를 실행하면 `TransactionRequiredException`이 발생할 수 있음
+  - 직접 선언한 쿼리 메서드에는 기본 트랜잭션 설정이 없음
+  - 리포지토리 조회에만 트랜잭션을 두면 조회 종료 후 락이 풀리므로 이후 계산·수정을 보호하지 못함
+  - 서비스의 `@Transactional`로 조회·계산·수정을 함께 묶어야 함. [Spring Data JPA Transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+- **자기 호출 주의**
+  - 기본 프록시 방식에서 같은 빈 내부의 `this.method()` 호출은 프록시를 거치지 않아 해당 메서드의 `@Transactional`이 새로 적용되지 않음
+  - 외부 호출에서 이미 트랜잭션이 시작됐는지와 구분해서 봐야 함
+- **없는 지갑의 동시 생성은 별도 보호**
+  - 조회된 행이 없다고 모든 DB에서 동일하게 잠금이 없다고 단정할 수는 없음. InnoDB는 조건과 격리 수준에 따라 갭 락 등을 사용할 수 있음
+  - 그래도 동시 생성의 유일성을 빈 조회의 잠금에만 기대면 안 됨. `userId` 유니크 제약과 충돌 처리를 마련해야 함
+- **락 구간을 짧게 유지**
+  - 락은 보통 트랜잭션 종료까지 유지됨
+  - 그 안에서 외부 HTTP 호출이나 무거운 연산을 하면 같은 행을 기다리는 요청들이 함께 지연됨
+
+## 정리
+
+- `@Lock`은 lock mode를 전달하고, 비관적 락의 실제 잠금은 DB가 수행함
+- 읽고 계산해서 쓰는 패턴에서는 공유 락 승격보다 `PESSIMISTIC_WRITE`로 먼저 잠그는 방식이 적합함
+- 락 조회 메서드는 일반 조회와 이름을 분리하고, 네이티브 쿼리는 SQL에 직접 작성
+- 대기 정책은 `@QueryHints`로 요청하되, 양수 타임아웃의 실제 적용 여부와 DB 설정을 확인
+- 락 획득이 1차 캐시의 최신화를 뜻하지는 않음
+- 조회·계산·수정을 같은 트랜잭션으로 묶고, 락 조회를 첫 접근으로 두며 락 구간은 짧게 유지
