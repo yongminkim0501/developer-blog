@@ -21,7 +21,7 @@ export function PostCard({
           <img
             src={post.thumbnail}
             alt=""
-            className={`post-cover${post.thumbnailFit === "contain" ? " thumbnail-contain" : ""}`}
+            className={`post-cover${post.thumbnailFit === "contain" ? " thumbnail-contain" : ""}${post.thumbnailPadding === "none" ? " thumbnail-no-padding" : ""}`}
           />
         ) : (
           <div className="fallback-cover">{post.category}</div>

@@ -51,7 +51,7 @@ export default function Article({
           </header>
           {post.thumbnail && (
             <img
-              className={`article-hero${post.thumbnailFit === "contain" ? " thumbnail-contain" : ""}`}
+              className={`article-hero${post.thumbnailFit === "contain" ? " thumbnail-contain" : ""}${post.thumbnailPadding === "none" ? " thumbnail-no-padding" : ""}`}
               src={post.thumbnail}
               alt={`${post.title} 대표 이미지`}
             />

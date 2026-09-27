@@ -15,6 +15,7 @@ export interface Post {
   featured?: boolean;
   thumbnail?: string;
   thumbnailFit?: "cover" | "contain";
+  thumbnailPadding?: "none";
   readingTime: number;
   body: string;
   tech?: string[];

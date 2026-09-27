@@ -1059,6 +1059,10 @@ a:focus-visible {
   padding: clamp(24px, 4vw, 56px);
   background: #f6f7f8;
 }
+.thumbnail-no-padding {
+  padding: 0;
+  background: #fff;
+}
 .article-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 190px;
