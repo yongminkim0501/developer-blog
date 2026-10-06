@@ -52,7 +52,7 @@ public class MdxMetadataReader {
             catch (RuntimeException e) { throw invalid(label, "date must be YYYY-MM-DD"); }
             Integer week = null;
             if (data.containsKey("week")) {
-                if (!(data.get("week") instanceof Integer n) || n < 1 || n > 104) throw invalid(label, "invalid week");
+                if (!(data.get("week") instanceof Integer n) || n < 0 || n > 104) throw invalid(label, "invalid week");
                 week = (Integer) data.get("week");
             }
             String metadata = text.substring(4, end);

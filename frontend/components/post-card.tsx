@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Post } from "@/types";
 import { dateLabel, postUrl } from "@/lib/content";
 import { ArrowUpRight } from "lucide-react";
+import { CardViewCount } from "./site-stats";
 export function PostCard({
   post,
   large = false,
@@ -47,6 +48,9 @@ export function PostCard({
         {dateLabel(post.date)}
         <span>·</span>
         {post.readingTime}분 읽기
+        {post.collection !== "projects" && post.status === "published" && (
+          <CardViewCount slug={post.slug} />
+        )}
       </div>
     </article>
   );

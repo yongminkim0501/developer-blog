@@ -26,7 +26,7 @@ public class ViewService {
         // Keep publication status stable while recording the visit.
         var found=jdbc.queryForList("SELECT slug FROM post_index WHERE slug=? AND published=true FOR SHARE",String.class,slug);
         if(found.isEmpty()) throw ApiException.notFound();
-        LocalDate today=LocalDate.now(clock);
+        LocalDate today=LocalDate.ofInstant(clock.instant(), SiteStatsService.ZONE);
         String hash=MdxMetadataReader.hash(visitorId.toString());
         int inserted=jdbc.update("""
             INSERT INTO post_visits(slug,visitor_hash,viewed_on) VALUES (?,?,?)

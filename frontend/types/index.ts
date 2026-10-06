@@ -51,3 +51,18 @@ export interface ViewService {
     signal?: AbortSignal,
   ): Promise<ApiResult<ViewCount>>;
 }
+export interface SiteStats {
+  date: string;
+  timeZone: string;
+  todayVisitors: number;
+  totalVisitors: number;
+  totalViews: number;
+  postViews: Record<string, number>;
+}
+export interface StatsService {
+  get(signal?: AbortSignal): Promise<ApiResult<SiteStats>>;
+  record(
+    visitorId: string,
+    signal?: AbortSignal,
+  ): Promise<ApiResult<SiteStats>>;
+}

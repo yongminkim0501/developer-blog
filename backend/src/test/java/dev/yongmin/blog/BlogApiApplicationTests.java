@@ -3,6 +3,7 @@ package dev.yongmin.blog;
 import dev.yongmin.blog.content.IndexService;
 import dev.yongmin.blog.content.PostIndexRepository;
 import dev.yongmin.blog.stats.ViewService;
+import dev.yongmin.blog.stats.SiteStatsService;
 import java.nio.file.*;
 import java.time.*;
 import java.util.*;
@@ -41,6 +42,7 @@ class BlogApiApplicationTests {
     @Autowired MockMvc mvc;
     @Autowired IndexService index;
     @Autowired ViewService views;
+    @Autowired SiteStatsService stats;
     @Autowired PostIndexRepository posts;
     @Autowired JdbcTemplate jdbc;
     @Autowired MutableClock clock;
@@ -56,7 +58,7 @@ class BlogApiApplicationTests {
         @Override public Instant instant() { return now; }
     }
     @BeforeEach void before() throws Exception {
-        jdbc.execute("TRUNCATE post_visits,post_daily_views,post_index CASCADE");
+        jdbc.execute("TRUNCATE site_visits,site_daily_visitors,post_visits,post_daily_views,post_index CASCADE");
         try(var paths=Files.walk(content)) { for(Path p:paths.sorted(Comparator.reverseOrder()).toList()) if(!p.equals(content)) Files.delete(p); }
         Files.createDirectories(content.resolve("blog"));
         Files.createDirectories(content.resolve("jungle"));
@@ -152,6 +154,73 @@ class BlogApiApplicationTests {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM post_visits",Long.class)).isZero();
         assertThat(views.get("pintos").views()).isEqualTo(2);
     }
+    @Test void siteStatsReadDoesNotCountVisitsAndOnlyIncludesPublishedPosts() throws Exception {
+        mvc.perform(get("/api/v1/stats")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.todayVisitors").value(0))
+            .andExpect(jsonPath("$.data.totalVisitors").value(0))
+            .andExpect(jsonPath("$.data.totalViews").value(0))
+            .andExpect(jsonPath("$.data.postViews.pintos").value(0))
+            .andExpect(jsonPath("$.data.postViews.private").doesNotExist());
+        UUID id = UUID.randomUUID();
+        views.record("pintos", id);
+        views.record("memory", id);
+        assertThat(stats.summary().totalViews()).isEqualTo(2);
+        assertThat(stats.summary().totalVisitors()).isZero();
+        write("blog", "pintos", "draft", "Hidden", "pintos");
+        index.sync();
+        assertThat(stats.summary().postViews()).doesNotContainKey("pintos");
+        assertThat(stats.summary().totalViews()).isEqualTo(1);
+        mvc.perform(post("/api/v1/stats/visits").contentType("application/json").content("{\"visitorId\":\"bad\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/stats/visits").contentType("application/json").content("{}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/stats/visits").contentType("application/json").content("{\"visitorId\":\"" + id + "\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.todayVisitors").value(1));
+    }
+
+    @Test void siteVisitorsDeduplicateConcurrentTabsAndKeepDailyTotalsAfterCleanup() throws Exception {
+        UUID same = UUID.randomUUID();
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Callable<SiteStatsService.Summary>> calls = new ArrayList<>();
+            for (int i = 0; i < 12; i++) calls.add(() -> stats.record(same));
+            for (int i = 0; i < 12; i++) calls.add(() -> stats.record(UUID.randomUUID()));
+            for (var future : executor.invokeAll(calls)) future.get(10, TimeUnit.SECONDS);
+        }
+        assertThat(stats.summary().todayVisitors()).isEqualTo(13);
+        assertThat(stats.summary().totalVisitors()).isEqualTo(13);
+        clock.now = clock.now.plus(Duration.ofDays(4));
+        index.sync();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM site_visits", Long.class)).isZero();
+        assertThat(stats.summary().todayVisitors()).isZero();
+        assertThat(stats.summary().totalVisitors()).isEqualTo(13);
+        assertThat(stats.record(same).totalVisitors()).isEqualTo(14);
+    }
+
+    @Test void visitsAndViewsRollOverAtKoreanMidnight() {
+        UUID id = UUID.randomUUID();
+        clock.now = Instant.parse("2026-10-05T14:59:59Z");
+        stats.record(id);
+        views.record("pintos", id);
+        clock.now = Instant.parse("2026-10-05T15:00:00Z");
+        assertThat(stats.summary().date()).isEqualTo(LocalDate.of(2026, 10, 6));
+        assertThat(stats.summary().todayVisitors()).isZero();
+        assertThat(stats.record(id).todayVisitors()).isEqualTo(1);
+        assertThat(stats.record(id).totalVisitors()).isEqualTo(2);
+        assertThat(views.record("pintos", id).views()).isEqualTo(2);
+        assertThat(views.record("pintos", id).views()).isEqualTo(2);
+    }
+
+    @Test void weekZeroDoesNotBlockNewPostsFromBeingIndexed() throws Exception {
+        write("jungle", "week-zero", "published", "정글 0주차", "jungle");
+        Path file = content.resolve("jungle/week-zero/index.mdx");
+        Files.writeString(file, Files.readString(file).replace("week: 8", "week: 0"));
+        index.sync();
+        mvc.perform(get("/api/v1/posts/week-zero/views")).andExpect(status().isOk());
+        Files.writeString(file, Files.readString(file).replace("week: 0", "week: -1"));
+        assertThatThrownBy(() -> index.sync()).hasMessageContaining("invalid week");
+        assertThat(views.get("week-zero").views()).isZero();
+    }
+
     @AfterAll static void cleanup() throws Exception {
         try(var paths=Files.walk(content)) { for(Path p:paths.sorted(Comparator.reverseOrder()).toList()) Files.delete(p); }
     }

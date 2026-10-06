@@ -33,7 +33,10 @@ public class IndexService {
             else unchanged++;
         }
         for (PostIndex post : existing.values()) if (post.published()) { post.unpublish(now); unpublished++; }
-        jdbc.update("DELETE FROM post_visits WHERE viewed_on < ?", java.time.LocalDate.now(clock).minusDays(2));
+        jdbc.update("DELETE FROM post_visits WHERE viewed_on < ?",
+            java.time.LocalDate.ofInstant(clock.instant(), dev.yongmin.blog.stats.SiteStatsService.ZONE).minusDays(2));
+        jdbc.update("DELETE FROM site_visits WHERE visited_on < ?",
+            java.time.LocalDate.ofInstant(clock.instant(), dev.yongmin.blog.stats.SiteStatsService.ZONE).minusDays(2));
         return new IndexResult(snapshot.size(),updated,unchanged,unpublished);
     }
     public record IndexResult(int published, int updated, int unchanged, int unpublished) {}

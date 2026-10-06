@@ -28,7 +28,8 @@ http://localhost:3000 에서 확인합니다. Spring API는 localhost:8080, Post
 - 키보드 검색(⌘K / Ctrl+K), 접근성 Dialog, 다크 모드, 모바일 메뉴
 - Spring Boot 4.1.1 / Java 21 / PostgreSQL 17 / JPA / Flyway
 - MDX 공개 메타데이터 자동 인덱싱, 실제 검색 API와 Next.js 서버 프록시
-- 일별 중복 판정을 적용한 글 조회수, 인증된 관리자 통계·재인덱싱 API
+- 한국 시간 기준 브라우저별 일일 중복을 제외한 글 조회수·사이트 방문 수, 인증된 관리자 통계·재인덱싱 API
+- 글 상세·목록 카드의 조회수, 공통 푸터의 오늘 방문·누적 방문·전체 조회
 - SearchService / ViewService의 HTTP Adapter
 - 챗봇은 현재 제공하지 않으며, 추후 검색 기능과 통합 예정
 

@@ -4,6 +4,8 @@ import type {
   SearchService,
   ViewService,
   ViewCount,
+  SiteStats,
+  StatsService,
 } from "@/types";
 
 async function request<T>(
@@ -50,6 +52,15 @@ export const httpViews: ViewService = {
     request<ViewCount>(`/posts/${encodeURIComponent(slug)}/views`, { signal }),
   record: (slug, visitorId, signal) =>
     request<ViewCount>(`/posts/${encodeURIComponent(slug)}/views`, {
+      method: "POST",
+      body: JSON.stringify({ visitorId }),
+      signal,
+    }),
+};
+export const httpStats: StatsService = {
+  get: (signal) => request<SiteStats>("/stats", { signal }),
+  record: (visitorId, signal) =>
+    request<SiteStats>("/stats/visits", {
       method: "POST",
       body: JSON.stringify({ visitorId }),
       signal,

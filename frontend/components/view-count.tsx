@@ -1,21 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useServices } from "./providers";
-
-function visitorId(): string | null {
-  try {
-    const key = "devlog-visitor";
-    const existing = sessionStorage.getItem(key);
-    if (existing) return existing;
-    const id = crypto.randomUUID();
-    sessionStorage.setItem(key, id);
-    return id;
-  } catch {
-    return null;
-  }
-}
+import { visitorId } from "@/lib/visitor";
+import { useSiteStats } from "./site-stats";
 export default function ViewCount({ slug }: { slug: string }) {
   const { views } = useServices();
+  const { refresh } = useSiteStats();
   const [count, setCount] = useState<{ slug: string; value: number } | null>(
     null,
   );
@@ -28,15 +18,26 @@ export default function ViewCount({ slug }: { slug: string }) {
       : views.get(slug, controller.signal);
     result
       .then((response) => {
-        if (!controller.signal.aborted && response.success)
+        if (!controller.signal.aborted && response.success) {
           setCount({ slug, value: response.data.views });
+          refresh();
+        }
       })
       .catch(() => {
         /* Reading the article remains available if tracking is unavailable. */
       });
     return () => controller.abort();
-  }, [slug, views]);
-  if (!count || count.slug !== slug) return null;
+  }, [slug, views, refresh]);
+  if (!views) return null;
+  if (!count || count.slug !== slug)
+    return (
+      <span
+        aria-label="조회수"
+        title="조회수를 불러오는 중이거나 잠시 연결할 수 없어요."
+      >
+        조회 —
+      </span>
+    );
   return (
     <span aria-label="조회수">조회 {count.value.toLocaleString("ko-KR")}</span>
   );

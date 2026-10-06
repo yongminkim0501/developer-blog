@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { posts } from "@/lib/content";
 import Header from "@/components/header";
 import { Providers } from "@/components/providers";
+import SiteStatsFooter from "@/components/site-stats";
 import "./globals.css";
 const pretendard = localFont({
   src: "../public/fonts/PretendardVariable.woff2",
@@ -55,6 +56,7 @@ export default function RootLayout({
                 조금 더 알아보기 <ArrowUpRight size={17} />
               </Link>
             </div>
+            <SiteStatsFooter />
             <div className="footer-bottom">
               <span>© 2026 Yongmin. Built with curiosity.</span>
               <div>
