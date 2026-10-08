@@ -34,14 +34,21 @@ touch .github/pull_request_template.md
 ```
 최종 디렉토리 구조는 다음과 같습니다.
 ```text
-pintos/
+pintos_22.04_lab_docker/
+├── .devcontainer/
 ├── .github/
+│   ├── CONTRIBUTING.md
 │   └── pull_request_template.md
-├── threads/
-├── userprog/
-├── vm/
-├── filesys/
-└── ...
+└── pintos/
+    ├── devices/
+    ├── filesys/
+    ├── include/
+    ├── lib/
+    ├── tests/
+    ├── threads/
+    ├── userprog/
+    ├── utils/
+    └── ...
 ```
 ### 3. 템플릿 내용 작성
 파일에 원하는 양식을 마크다운으로 작성함
